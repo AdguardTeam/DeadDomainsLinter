@@ -1,0 +1,50 @@
+{
+  "name": "@adguard/dead-domains-linter",
+  "version": "1.0.0",
+  "description": "Simple tool to check adblock filtering rules for dead domains.",
+  "keywords": [
+    "adblock",
+    "adguard",
+    "filter",
+    "linter",
+    "list",
+    "ublock"
+  ],
+  "author": "AdGuard Software Ltd.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdguardTeam/dead-domains-linter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AdguardTeam/dead-domains-linter/issues"
+  },
+  "homepage": "https://github.com/AdguardTeam/dead-domains-linter#readme",
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "dependencies": {
+    "@adguard/agtree": "^1.1.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.9",
+    "@babel/eslint-parser": "^7.23.9",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "husky": "^9.0.6",
+    "jest": "^29.7.0"
+  },
+  "scripts": {
+    "lint": "eslint . --cache",
+    "test": "jest --runInBand --detectOpenHandles --verbose .",
+    "increment": "yarn version --patch --no-git-tag-version",
+    "prepare": "husky"
+  }
+}

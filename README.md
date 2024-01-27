@@ -9,3 +9,13 @@ In the future, it should be replaced with an [AGLint rule][aglintrule].
 ## How to use
 
 TBD
+
+## How to develop
+
+* `yarn install` - install dependencies.
+* `yarn lint` - lint the code.
+* `yarn test` - run the unit-tests.
+
+## TODO
+
+* [ ] Add cometic rules modifiers support, for now they are simply ignored

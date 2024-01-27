@@ -1,0 +1,14 @@
+---
+!include 'build.yaml'
+
+---
+!include 'deploy.yaml'
+
+---
+!include 'increment.yaml'
+
+---
+!include 'permissions.yaml'
+
+---
+!include 'test.yaml'

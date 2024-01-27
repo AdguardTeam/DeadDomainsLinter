@@ -104,7 +104,7 @@ function extractNetworkRuleDomains(ast) {
  * @returns {Array<String>} The list of all domains that are used by this rule.
  */
 function extractCosmeticRuleDomains(ast) {
-    // TODO: Extract and analyze cosmetic rules modifiers too.
+    // TODO(ameshkov): Extract and analyze cosmetic rules modifiers too.
 
     if (!ast.domains || ast.domains.length === 0) {
         return [];

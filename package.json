@@ -14,12 +14,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AdguardTeam/dead-domains-linter.git"
+    "url": "git+https://github.com/AdguardTeam/DeadDomainsLinter.git"
   },
   "bugs": {
-    "url": "https://github.com/AdguardTeam/dead-domains-linter/issues"
+    "url": "https://github.com/AdguardTeam/DeadDomainsLinter/issues"
   },
-  "homepage": "https://github.com/AdguardTeam/dead-domains-linter#readme",
+  "homepage": "https://github.com/AdguardTeam/DeadDomainsLinter#readme",
   "files": [
     "src"
   ],

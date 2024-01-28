@@ -1,5 +1,6 @@
 const agtree = require('@adguard/agtree');
 const urlfilter = require('./urlfilter');
+const dnscheck = require('./dnscheck');
 const utils = require('./utils');
 
 /**
@@ -301,9 +302,10 @@ const domainsCheckCache = {};
  * urlfilter web service to check which of them are dead.
  *
  * @param {Array<String>} domains - Parts of the rule with domains.
+ * @param {boolean} useDNS - Double-check dead domains with a DNS query.
  * @returns {Array<String>} A list of dead domains.
  */
-async function findDeadDomains(domains) {
+async function findDeadDomains(domains, useDNS) {
     const deadDomains = [];
     const domainsToCheck = [];
 
@@ -319,11 +321,24 @@ async function findDeadDomains(domains) {
     }
 
     const checkResult = await urlfilter.findDeadDomains(domainsToCheck);
-    deadDomains.push(...checkResult);
+
+    if (useDNS) {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const domain of checkResult) {
+            // eslint-disable-next-line no-await-in-loop
+            const dnsRecordExists = await dnscheck.checkDomain(domain);
+
+            if (!dnsRecordExists) {
+                deadDomains.push(domain);
+            }
+        }
+    } else {
+        deadDomains.push(...checkResult);
+    }
 
     // eslint-disable-next-line no-restricted-syntax
     for (const domain of domainsToCheck) {
-        if (checkResult.includes(domain)) {
+        if (deadDomains.includes(domain)) {
             domainsCheckCache[domain] = false;
         } else {
             domainsCheckCache[domain] = true;
@@ -349,9 +364,10 @@ async function findDeadDomains(domains) {
  * found there and checks if they are alive using the urlfilter web service.
  *
  * @param {String} ruleText - Text of the rule to check.
+ * @param {boolean} useDNS - Double-check the dead domains with a DNS query.
  * @returns {Promise<LinterResult|null>} Result of the rule linting.
  */
-async function lintRule(ruleText) {
+async function lintRule(ruleText, useDNS = false) {
     const ast = agtree.RuleParser.parse(ruleText);
 
     const domains = extractRuleDomains(ast);
@@ -359,7 +375,7 @@ async function lintRule(ruleText) {
         return null;
     }
 
-    const deadDomains = await findDeadDomains(domains);
+    const deadDomains = await findDeadDomains(domains, useDNS);
 
     if (!deadDomains || deadDomains.length === 0) {
         return null;

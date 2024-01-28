@@ -45,21 +45,48 @@ Alternatively, you can run it in the "show only" mode:
 dead-domains-linter --show
 ```
 
+> [!IMPORTANT]
+> Please read this if you maintain a filter list with a large number of users.
+
+The tool relies on AdGuard DNS snapshot of the Internet domains that represents
+all domains used by 100M+ AdGuard DNS users for the last 24 hours. Using this
+snapshot is a good way to find dead domains, but it alone may not be 100%
+accurate and it can produce false positives for really rarely visited domains.
+This is why the tool also double-checks dead domains with a DNS query.
+
+If your filter list does not have a large number of dead domains, we recommend
+disabling that double-check by running the tool with the `--dnscheck=false`
+flag:
+
+```shell
+dead-domains-linter --dnscheck=false
+```
+
+> [!NOTE]
+> Actually, AdGuard [filter policy][filterpolicy] requires that the website
+> should be popular enough to be added to the filter list. So there's a great
+> chance that even when the tool produced a false positive when running with
+> `--dnscheck=false`, this domain anyways does not qualify for the filter list.
+
+[filterpolicy]: https://adguard.com/kb/general/ad-filtering/filter-policy/
+
 Full usage info:
 
 ```shell
-Usage: cli.js [options]
+Usage: dead-domains-linter [options]
 
 Options:
-  -i, --input    glob expression that selects files that the tool will scan.
+  -i, --input     glob expression that selects files that the tool will scan.
                                                   [string] [default: "**/*.txt"]
-  -a, --auto     Automatically apply suggested fixes without asking the user.
+      --dnscheck  Double-check dead domains with a DNS query.
+                                                       [boolean] [default: true]
+  -a, --auto      Automatically apply suggested fixes without asking the user.
                                                       [boolean] [default: false]
-  -s, --show     Show suggestions without applying them.
+  -s, --show      Show suggestions without applying them.
                                                       [boolean] [default: false]
-  -v, --verbose  Run with verbose logging             [boolean] [default: false]
-      --version  Show version number                                   [boolean]
-  -h, --help     Show help                                             [boolean]
+  -v, --verbose   Run with verbose logging            [boolean] [default: false]
+      --version   Show version number                                  [boolean]
+  -h, --help      Show help                                            [boolean]
 
 Examples:
   cli.js -i **/*.txt       scan all .txt files in the current directory and

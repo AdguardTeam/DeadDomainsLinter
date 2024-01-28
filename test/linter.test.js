@@ -1,14 +1,24 @@
 const checker = require('../src/linter');
 
-const testLintRule = (rule, expected) => {
+const testLintRule = (rule, expected, useDNS = false) => {
     return async () => {
-        const result = await checker.lintRule(rule);
+        const result = await checker.lintRule(rule, useDNS);
 
         expect(result).toEqual(expected);
     };
 };
 
 describe('Linter', () => {
+    describe('Lint with DNS double-check', () => {
+        it(
+            'suggest removing rule with a dead (with DNS double-check) domain in the pattern',
+            testLintRule('||example.notexistingdomain^', {
+                suggestedRuleText: '',
+                deadDomains: ['example.notexistingdomain'],
+            }, true),
+        );
+    });
+
     describe('Network rules', () => {
         it(
             'suggest removing rule with a dead domain in the pattern',

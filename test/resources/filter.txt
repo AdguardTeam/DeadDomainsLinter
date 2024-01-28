@@ -1,7 +1,0 @@
-! Use this file when testing the CLI interface.
-||example.org^$third-party
-||example.org^$domain=example.notexisting
-||example.org^$domain=~example.notexisting
-example.notexisting##banner
-
-! Проверяем, что с кодировкой все останется в порядке после перезаписи.

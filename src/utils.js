@@ -17,7 +17,10 @@ function unique(arr) {
  * @returns {boolean} Returns true if the domain is valid, false otherwise.
  */
 function validDomain(domain) {
-    return domain.match(/^[a-z0-9.-]+$/i);
+    // Note, that we don't count .onion domains valid as their existence
+    // cannot be verified with the urlfilter service.
+    return domain.match(/^[a-z0-9.-]+$/i)
+        && !domain.endsWith('.onion');
 }
 
 module.exports = {

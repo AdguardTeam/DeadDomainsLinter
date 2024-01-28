@@ -24,6 +24,10 @@ const { argv } = require('yargs')
         type: 'string',
         description: 'glob expression that selects files that the tool will scan.',
     })
+    .option('dnscheck', {
+        type: 'boolean',
+        description: 'Double-check dead domains with a DNS query.',
+    })
     .option('auto', {
         alias: 'a',
         type: 'boolean',
@@ -40,6 +44,7 @@ const { argv } = require('yargs')
         description: 'Run with verbose logging',
     })
     .default('input', '**/*.txt')
+    .default('dnscheck', true)
     .default('auto', false)
     .default('show', false)
     .default('verbose', false)
@@ -102,7 +107,7 @@ async function processLine(line, file, lineNumber) {
     consola.verbose(`Processing ${file}:${lineNumber}: ${line}`);
 
     try {
-        const result = await linter.lintRule(line);
+        const result = await linter.lintRule(line, argv.dnscheck);
 
         // If the result is empty, the line can be simply skipped.
         if (!result) {
@@ -146,6 +151,11 @@ async function processLine(line, file, lineNumber) {
     }
 }
 
+// isEOL checks that the character is a known end of line character.
+function isEOL(c) {
+    return c === '\r\n' || c === '\n';
+}
+
 /**
  * Processes the specified file.
  *
@@ -155,7 +165,9 @@ async function processFile(file) {
     consola.info(consolaUtils.colorize('bold', `Processing file ${file}`));
 
     const content = fs.readFileSync(file, 'utf8');
-    const lines = content.split('\n');
+
+    // Split the file contents into lines preserving "new line" characters.
+    const lines = content.split(/(\r?\n)/);
 
     const results = [];
 
@@ -164,10 +176,14 @@ async function processFile(file) {
         const line = lines[i];
         const lineNumber = i + 1;
 
-        // eslint-disable-next-line no-await-in-loop
-        const result = await processLine(line, file, lineNumber);
-        if (!result.skip) {
-            results.push(result);
+        // Skip the new line characters, we'll only need them when we'll be
+        // modifying the file.
+        if (!isEOL(line)) {
+            // eslint-disable-next-line no-await-in-loop
+            const result = await processLine(line, file, lineNumber);
+            if (!result.skip) {
+                results.push(result);
+            }
         }
     }
 
@@ -195,19 +211,28 @@ async function processFile(file) {
         // original array modification.
         results.sort((a, b) => b.lineNumber - a.lineNumber);
 
-        // Go through the results array in and either remove or modify the lines.
+        // Go through the results array in and either remove or modify the
+        // lines.
         for (let i = 0; i < results.length; i += 1) {
             const result = results[i];
             const lineIdx = result.lineNumber - 1;
 
             if (result.remove) {
                 lines.splice(lineIdx, 1);
+                if (isEOL(lines[lineIdx])) {
+                    // If the next line is a new line character, we need to
+                    // remove it as well.
+                    lines.splice(lineIdx, 1);
+                }
             } else if (result.modifiedLine) {
                 lines[lineIdx] = result.modifiedLine;
             }
         }
 
-        fs.writeFileSync(file, lines.join('\n'));
+        // Note, that we join the lines with empty string and not with a new
+        // line because the new line characters were actually preserved when
+        // we split the file contents.
+        fs.writeFileSync(file, lines.join(''));
     } else {
         consola.info(`Skipping file ${file}`);
     }

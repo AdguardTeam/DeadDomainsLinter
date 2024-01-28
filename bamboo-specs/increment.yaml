@@ -5,7 +5,7 @@ plan:
   key: DDLINCR
   name: dead-domains-linter - increment
 variables:
-  dockerContainer: adguard/node-ssh:18.13--0
+  dockerContainer: adguard/node-ssh:18.13--2
 
 stages:
   - Increment:
@@ -19,7 +19,7 @@ Increment:
   docker:
     image: "${bamboo.dockerContainer}"
     volumes:
-      ${system.YARN_DIR}: "${bamboo.cacheYarn}"
+      ${system.PNPM_DIR}: "${bamboo.cachePnpm}"
   other:
     clean-working-dir: true
   tasks:
@@ -35,7 +35,7 @@ Increment:
             # Fix mixed logs
             exec 2>&1
 
-            yarn increment
+            npm run increment
     - any-task:
         plugin-key: com.atlassian.bamboo.plugins.vcs:task.vcs.commit
         configuration:

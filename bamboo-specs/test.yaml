@@ -5,7 +5,7 @@ plan:
   key: DDLTEST
   name: dead-domains-linter - tests
 variables:
-  dockerContainer: adguard/node-ssh:18.13--0
+  dockerContainer: adguard/node-ssh:18.13--2
 
 stages:
   - Test:
@@ -19,7 +19,7 @@ Test:
   docker:
     image: "${bamboo.dockerContainer}"
     volumes:
-      ${system.YARN_DIR}: "${bamboo.cacheYarn}"
+      ${system.PNPM_DIR}: "${bamboo.cachePnpm}"
   tasks:
     - checkout:
         force-clean-build: true
@@ -33,10 +33,12 @@ Test:
             # Fix mixed logs
             exec 2>&1
 
-            yarn install ${bamboo.varsYarn}
+            npm install -g pnpm
 
-            yarn lint
-            yarn test
+            pnpm install --ignore-scripts --no-optional
+
+            pnpm run lint
+            pnpm run test
 
             rm -rf node_modules
   final-tasks:

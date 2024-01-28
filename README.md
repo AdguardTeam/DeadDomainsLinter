@@ -70,9 +70,13 @@ Examples:
 
 ## How to develop
 
-* `yarn install` - install dependencies.
-* `yarn lint` - lint the code.
-* `yarn test` - run the unit-tests.
+First, install [pnpm](https://pnpm.io/): `npm install -g pnpm`.
+
+Then you can use the following commands:
+
+* `pnpm install` - install dependencies.
+* `pnpm run lint` - lint the code.
+* `pnpm run test` - run the unit-tests.
 
 ## TODO
 

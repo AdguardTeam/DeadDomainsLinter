@@ -5,7 +5,7 @@ plan:
   key: DDLBUILD
   name: dead-domains-linter  -  build
 variables:
-  dockerContainer: adguard/node-ssh:18.13--0
+  dockerContainer: adguard/node-ssh:18.13--2
 
 stages:
   - Build:
@@ -21,7 +21,7 @@ Build:
   docker:
     image: "${bamboo.dockerContainer}"
     volumes:
-      ${system.YARN_DIR}: "${bamboo.cacheYarn}"
+      ${system.PNPM_DIR}: "${bamboo.cachePnpm}"
   tasks:
     - checkout:
         force-clean-build: true
@@ -35,10 +35,13 @@ Build:
             # Fix mixed logs
             exec 2>&1
 
-            # install dependencies at the beginning
-            yarn install ${bamboo.varsYarn}
+            npm install -g pnpm
 
-            yarn build-txt
+            # Install dependencies at the beginning.
+            pnpm install --ignore-scripts --no-optional
+
+            # Prepare the script that will be injected into the build.
+            pnpm run build-txt
     - inject-variables:
         file: dist/build.txt
         scope: RESULT
@@ -54,16 +57,16 @@ Build:
             # Fix mixed logs
             exec 2>&1
 
-            # Fail if version was not incremented
+            # Fail if the version was not incremented.
             if [ "$(git tag -l "v${bamboo.inject.version}")" ]; then
               echo "Build failed!"
               echo "Error: Tag v${bamboo.inject.version} already exists. Increment version before build"
               exit 1
             fi
 
-            yarn pack --filename dead-domains-linter.tgz
+            npm pack && mv $(ls adguard-dead-domains-linter-*.tgz) dead-domains-linter.tgz
 
-            # clean up at the end
+            # Clean up in the end.
             rm -rf node_modules
     - any-task:
         plugin-key: com.atlassian.bamboo.plugins.vcs:task.vcs.tagging

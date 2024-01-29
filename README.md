@@ -1,6 +1,6 @@
 # Dead Domains Linter
 
-[![NPM](https://nodei.co/npm/@adguard/dead-domains-linter.png?compact=true)](https://www.npmjs.com/package/@adguard/dead-domains-linter/)
+[![npm-badge]][npm-url] [![license-badge]][license-url]
 
 This is a simple tool that checks adblock filtering rules for dead domains.
 
@@ -106,3 +106,9 @@ Then you can use the following commands:
 ## TODO
 
 * [ ] Add cometic rules modifiers support, for now they are simply ignored
+
+[npm-badge]: https://img.shields.io/npm/v/@adguard/dead-domains-linter
+[npm-url]: https://www.npmjs.com/package/@adguard/dead-domains-linter
+
+[license-badge]: https://img.shields.io/github/license/AdGuardTeam/DeadDomainsLinter
+[license-url]: https://github.com/AdguardTeam/DeadDomainsLinter/blob/master/LICENSE

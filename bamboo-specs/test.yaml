@@ -19,7 +19,7 @@ Test:
   docker:
     image: "${bamboo.dockerContainer}"
     volumes:
-      ${system.PNPM_DIR}: "${bamboo.cachePnpm}"
+      ${system.NPM_DIR}: "${bamboo.cacheNpm}"
   tasks:
     - checkout:
         force-clean-build: true
@@ -33,12 +33,10 @@ Test:
             # Fix mixed logs
             exec 2>&1
 
-            npm install -g pnpm
+            npm ci
 
-            pnpm install --ignore-scripts --no-optional
-
-            pnpm run lint
-            pnpm run test
+            npm run lint
+            npm run test
 
             rm -rf node_modules
   final-tasks:

@@ -1,5 +1,2 @@
-echo "Running pre-commit hook, make sure that pnpm is installed"
-
-pnpm run lint
-
-pnpm run test
+npm run lint
+npm run test

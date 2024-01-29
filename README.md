@@ -97,13 +97,11 @@ Examples:
 
 ## How to develop
 
-First, install [pnpm](https://pnpm.io/): `npm install -g pnpm`.
-
 Then you can use the following commands:
 
-* `pnpm install` - install dependencies.
-* `pnpm run lint` - lint the code.
-* `pnpm run test` - run the unit-tests.
+* `npm install` - install dependencies.
+* `npm run lint` - lint the code.
+* `npm run test` - run the unit-tests.
 
 ## TODO
 

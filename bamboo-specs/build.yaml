@@ -21,7 +21,7 @@ Build:
   docker:
     image: "${bamboo.dockerContainer}"
     volumes:
-      ${system.PNPM_DIR}: "${bamboo.cachePnpm}"
+      ${system.NPM_DIR}: "${bamboo.cacheNpm}"
   tasks:
     - checkout:
         force-clean-build: true
@@ -35,13 +35,11 @@ Build:
             # Fix mixed logs
             exec 2>&1
 
-            npm install -g pnpm
-
             # Install dependencies at the beginning.
-            pnpm install --ignore-scripts --no-optional
+            npm ci
 
             # Prepare the script that will be injected into the build.
-            pnpm run build-txt
+            npm run build-txt
     - inject-variables:
         file: dist/build.txt
         scope: RESULT

@@ -19,7 +19,7 @@ Increment:
   docker:
     image: "${bamboo.dockerContainer}"
     volumes:
-      ${system.PNPM_DIR}: "${bamboo.cachePnpm}"
+      ${system.NPM_DIR}: "${bamboo.cacheNpm}"
   other:
     clean-working-dir: true
   tasks:

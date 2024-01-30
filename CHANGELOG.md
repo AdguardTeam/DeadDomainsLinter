@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog][keepachangelog], and this project adheres to [Semantic Versioning][semver].
 
-## [1.0.5] - 2024-01-29
+## [Unreleased][unreleased]
+
+### Fixed
+
+- Fixed the issue with extracting domains from some URL patterns [#11].
+
+## [1.0.6] - 2024-01-29
 
 ### Added
 
@@ -20,6 +26,7 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 - Fixed the issue with counting IPv4 addresses as dead domains [#5].
 - Fixed the issue with suggesting removing TLDs and extension IDs [#6].
 
-[1.0.5]: https://github.com/AdguardTeam/AGLint/compare/v1.0.4...v1.0.5
+[unreleased]: https://github.com/AdguardTeam/AGLint/compare/v1.0.6...master
+[1.0.6]: https://github.com/AdguardTeam/AGLint/compare/v1.0.4...v1.0.6
 [keepachangelog]: https://keepachangelog.com/en/1.0.0/
 [semver]: https://semver.org/spec/v2.0.0.html

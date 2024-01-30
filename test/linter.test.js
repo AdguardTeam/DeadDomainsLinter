@@ -44,6 +44,46 @@ describe('Linter', () => {
         );
 
         it(
+            'suggest removing rule with a dead domain in the pattern URL',
+            testLintRule('||example.notexistingdomain/thisissomepath/tosomewhere', {
+                remove: true,
+                deadDomains: ['example.notexistingdomain'],
+            }),
+        );
+
+        it(
+            'suggest removing rule with a dead domain in the pattern from exception rule',
+            testLintRule('@@||example.notexistingdomain/thisissomepath/tosomewhere', {
+                remove: true,
+                deadDomains: ['example.notexistingdomain'],
+            }),
+        );
+
+        it(
+            'suggest removing rule with a dead domain in the pattern with ://',
+            testLintRule('://example.notexistingdomain/thisissomepath/tosomewhere', {
+                remove: true,
+                deadDomains: ['example.notexistingdomain'],
+            }),
+        );
+
+        it(
+            'suggest removing rule with a dead domain with an WebSocket URL pattern',
+            testLintRule('wss://example.notexistingdomain/thisissomepath/tosomewhere', {
+                remove: true,
+                deadDomains: ['example.notexistingdomain'],
+            }),
+        );
+
+        it(
+            'suggest removing rule with a dead domain with an URL pattern',
+            testLintRule('|https://example.notexistingdomain/thisissomepath/tosomewhere', {
+                remove: true,
+                deadDomains: ['example.notexistingdomain'],
+            }),
+        );
+
+        it(
             'do not suggest removing IP addresses',
             testLintRule('||1.2.3.4^', null),
         );

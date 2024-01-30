@@ -9,6 +9,22 @@ const utils = require('./utils');
 const DOMAIN_MODIFIERS = ['domain', 'denyallow', 'from', 'to'];
 
 /**
+ * Regular expression that matches the domain in a network rule pattern.
+ */
+const PATTERN_DOMAIN_REGEX = (() => {
+    const startStrings = [
+        '||', '//', '://', 'http://', 'https://', '|http://', '|https://',
+        'ws://', 'wss://', '|ws://', '|wss://',
+    ];
+
+    const startRegex = startStrings.map((str) => {
+        return str.replace(/\//g, '\\/').replace(/\|/g, '\\|');
+    }).join('|');
+
+    return new RegExp(`^(@@)?(${startRegex})([a-z0-9-.]+)(\\^|\\/|$)`, 'i');
+})();
+
+/**
  * Attempts to extract the domain from the network rule pattern. If the pattern
  * does not contain a domain, returns null.
  *
@@ -20,10 +36,18 @@ function extractDomainFromPattern(ast) {
         return null;
     }
 
-    const regex = /^\|\|([a-z0-9-.]+)\^/;
-    const match = ast.pattern.value.match(regex);
-    if (match) {
-        const domain = match[1];
+    // Ignore regular expressions as we cannot be sure if it's for a hostname
+    // or not.
+    //
+    // TODO(ameshkov): Handle the most common cases like (negative lookahead +
+    // a list of domains).
+    if (ast.pattern.value.startsWith('/') && ast.pattern.value.endsWith('/')) {
+        return null;
+    }
+
+    const match = ast.pattern.value.match(PATTERN_DOMAIN_REGEX);
+    if (match && utils.validDomain(match[3])) {
+        const domain = match[3];
 
         return domain;
     }
@@ -69,12 +93,9 @@ function extractModifierDomains(modifier) {
 function extractNetworkRuleDomains(ast) {
     const domains = [];
 
-    if (ast.pattern) {
-        const regex = /^\|\|([a-z0-9-.]+)\^/i;
-        const match = ast.pattern.value.match(regex);
-        if (match && utils.validDomain(match[1])) {
-            domains.push(match[1]);
-        }
+    const patternDomain = extractDomainFromPattern(ast);
+    if (patternDomain) {
+        domains.push(patternDomain);
     }
 
     if (!ast.modifiers) {

@@ -72,9 +72,8 @@ function extractNetworkRuleDomains(ast) {
     if (ast.pattern) {
         const regex = /^\|\|([a-z0-9-.]+)\^/i;
         const match = ast.pattern.value.match(regex);
-        if (match) {
-            const domain = match[1];
-            domains.push(domain);
+        if (match && utils.validDomain(match[1])) {
+            domains.push(match[1]);
         }
     }
 
@@ -143,29 +142,31 @@ function extractRuleDomains(ast) {
  * dead domains.
  * @param {Array<String>} deadDomains - A list of dead domains.
  *
- * @returns {String} The rule text with suggested modification. Can remove an
- * empty string if it's suggested to remove the whole rule.
+ * @returns {agtree.AnyRule|null} Returns AST of the rule text with suggested
+ * modification. Returns null if the rule must be removed.
  */
 function modifyCosmeticRule(ast, deadDomains) {
     if (!ast.domains || ast.domains.children.length === 0) {
         // Do nothing if there are no domains in the rule. In theory, it
         // shouldn't happen, but check it just in case.
-        return agtree.RuleParser.generate(ast);
+        return ast;
     }
 
-    const hasPermittedDomains = ast.domains.children.some((domain) => !domain.exception);
+    const newAst = structuredClone(ast);
+
+    const hasPermittedDomains = newAst.domains.children.some((domain) => !domain.exception);
 
     // Go through ast.domains and remove those that contain dead domains.
     // Iterate in the reverse order to keep the indices correct.
-    for (let i = ast.domains.children.length - 1; i >= 0; i -= 1) {
-        const domain = ast.domains.children[i];
+    for (let i = newAst.domains.children.length - 1; i >= 0; i -= 1) {
+        const domain = newAst.domains.children[i];
 
         if (deadDomains.includes(domain.value)) {
-            ast.domains.children.splice(i, 1);
+            newAst.domains.children.splice(i, 1);
         }
     }
 
-    const hasPermittedDomainsAfterFilter = ast.domains.children.some((domain) => !domain.exception);
+    const hasPermittedDomainsAfterFilter = newAst.domains.children.some((domain) => !domain.exception);
     if (hasPermittedDomains && !hasPermittedDomainsAfterFilter) {
         // Suggest removing the whole rule if it had permitted domains before,
         // but does not have it anymore.
@@ -175,18 +176,22 @@ function modifyCosmeticRule(ast, deadDomains) {
         //
         // The rule must be removed in this case as otherwise its
         // scope will change to global.
-        return '';
+        return null;
     }
 
-    if (ast.domains.children.length === 0 && ast.exception) {
+    if (newAst.domains.children.length === 0 && newAst.exception) {
         // Suggest removing the whole rule if this is an exception rule.
         //
         // Example:
         // example.org#@#banner -> #@#banner
-        return '';
+        return null;
     }
 
-    return agtree.RuleParser.generate(ast);
+    // Update raws because it can be used to serialize the filter list back when
+    // applying changes.
+    newAst.raws.text = agtree.RuleParser.generate(newAst);
+
+    return newAst;
 }
 
 /**
@@ -197,29 +202,32 @@ function modifyCosmeticRule(ast, deadDomains) {
  * dead domains.
  * @param {Array<String>} deadDomains - A list of dead domains.
  *
- * @returns {String} The rule text with suggested modification. Can remove an
- * empty string if it's suggested to remove the whole rule.
+ * @returns {agtree.AnyRule|null} Returns AST of the rule text with suggested
+ * modification. Returns null if the rule must be removed.
  */
 function modifyNetworkRule(ast, deadDomains) {
     const patternDomain = extractDomainFromPattern(ast);
     if (deadDomains.includes(patternDomain)) {
         // Suggest completely removing the rule if it contains a dead domain in
         // the pattern.
-        return '';
+        return null;
     }
 
     if (!ast.modifiers) {
         // No modifiers in the rule, nothing to do.
-        return agtree.RuleParser.generate(ast);
+        return ast;
     }
+
+    // Clone the AST and apply all modifications to the cloned version.
+    const newAst = structuredClone(ast);
 
     const modifierIdxToRemove = [];
 
     // Go through the network rule modifiers and remove the dead domains from
     // them. Depending on the result, remove the whole modifier or even suggest
     // removing the whole rule.
-    for (let i = 0; i < ast.modifiers.children.length; i += 1) {
-        const modifier = ast.modifiers.children[i];
+    for (let i = 0; i < newAst.modifiers.children.length; i += 1) {
+        const modifier = newAst.modifiers.children[i];
 
         if (DOMAIN_MODIFIERS.includes(modifier.modifier.value)) {
             const modifierDomains = extractModifierDomains(modifier);
@@ -244,7 +252,7 @@ function modifyNetworkRule(ast, deadDomains) {
                 //
                 // The rule must be removed in this case as otherwise its
                 // scope will change to global.
-                return '';
+                return null;
             }
 
             if (filteredDomains.length === 0) {
@@ -259,17 +267,18 @@ function modifyNetworkRule(ast, deadDomains) {
     if (modifierIdxToRemove.length > 0) {
         // Remove the modifiers in reverse order to keep the indices correct.
         for (let i = modifierIdxToRemove.length - 1; i >= 0; i -= 1) {
-            ast.modifiers.children.splice(modifierIdxToRemove[i], 1);
+            newAst.modifiers.children.splice(modifierIdxToRemove[i], 1);
         }
     }
 
-    if (ast.modifiers.children.length === 0) {
+    if (newAst.modifiers.children.length === 0) {
         // No modifiers left in the rule, make the whole node undefined.
-        // eslint-disable-next-line no-param-reassign
-        ast.modifiers = undefined;
+        newAst.modifiers = undefined;
     }
 
-    return agtree.RuleParser.generate(ast);
+    newAst.raws.text = agtree.RuleParser.generate(newAst);
+
+    return newAst;
 }
 
 /**
@@ -279,8 +288,9 @@ function modifyNetworkRule(ast, deadDomains) {
  * @param {agtree.AnyRule} ast - The rule AST to modify and remove dead domains.
  * @param {Array<String>} deadDomains - A list of dead domains.
  *
- * @returns {String} The rule text with suggested modification. Can remove an
- * empty string if it's suggested to remove the whole rule.
+ * @returns {agtree.AnyRule|null} Returns AST of the rule text with suggested
+ * modification. Returns null if the rule must be removed.
+ * @throws {Error} Throws an error if the rule AST if for unexpected category.
  */
 function modifyRule(ast, deadDomains) {
     switch (ast.category) {
@@ -303,7 +313,7 @@ const domainsCheckCache = {};
  *
  * @param {Array<String>} domains - Parts of the rule with domains.
  * @param {boolean} useDNS - Double-check dead domains with a DNS query.
- * @returns {Array<String>} A list of dead domains.
+ * @returns {Promise<Array<String>>} A list of dead domains.
  */
 async function findDeadDomains(domains, useDNS) {
     const deadDomains = [];
@@ -353,9 +363,9 @@ async function findDeadDomains(domains, useDNS) {
  * in the rule and the suggested rule text after removing dead domains.
  * @typedef {Object} LinterResult
  *
- * @property {String} suggestedRuleText - The suggested rule text after removing
- * dead domains. If the whole rule should be removed, this field is an empty
- * string.
+ * @property {agtree.AnyRule|null} suggestedRule - AST of the suggested rule
+ * after removing dead domains. If the whole rule should be removed, this field
+ * is null.
  * @property {Array<String>} deadDomains - A list of dead domains in the rule.
  */
 
@@ -363,13 +373,11 @@ async function findDeadDomains(domains, useDNS) {
  * This function parses the input rule, extracts all domain names that can be
  * found there and checks if they are alive using the urlfilter web service.
  *
- * @param {String} ruleText - Text of the rule to check.
+ * @param {String} ast - AST of the rule that we're going to check.
  * @param {boolean} useDNS - Double-check the dead domains with a DNS query.
  * @returns {Promise<LinterResult|null>} Result of the rule linting.
  */
-async function lintRule(ruleText, useDNS = false) {
-    const ast = agtree.RuleParser.parse(ruleText);
-
+async function lintRule(ast, useDNS = false) {
     const domains = extractRuleDomains(ast);
     if (!domains || domains.length === 0) {
         return null;
@@ -381,10 +389,10 @@ async function lintRule(ruleText, useDNS = false) {
         return null;
     }
 
-    const suggestedRuleText = modifyRule(ast, deadDomains);
+    const suggestedRule = modifyRule(ast, deadDomains);
 
     return {
-        suggestedRuleText,
+        suggestedRule,
         deadDomains,
     };
 }

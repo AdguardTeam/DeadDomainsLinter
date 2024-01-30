@@ -5,7 +5,7 @@ plan:
   key: DDLTEST
   name: dead-domains-linter - tests
 variables:
-  dockerContainer: adguard/node-ssh:18.13--2
+  dockerContainer: adguard/node-ssh:18.13--3
 
 stages:
   - Test:
@@ -32,8 +32,6 @@ Test:
 
             # Fix mixed logs
             exec 2>&1
-
-            npm install -g pnpm
 
             pnpm install --ignore-scripts --no-optional
 

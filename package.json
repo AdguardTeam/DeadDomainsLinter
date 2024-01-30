@@ -27,12 +27,13 @@
     "dead-domains-linter": "src/cli.js"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   },
   "dependencies": {
     "@adguard/agtree": "^1.1.7",
     "consola": "^3.2.3",
     "glob": "^10.3.10",
+    "node-fetch": "^2.7.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {

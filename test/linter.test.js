@@ -1,10 +1,25 @@
+const agtree = require('@adguard/agtree');
 const checker = require('../src/linter');
 
 const testLintRule = (rule, expected, useDNS = false) => {
     return async () => {
-        const result = await checker.lintRule(rule, useDNS);
+        const ast = agtree.RuleParser.parse(rule);
+        const result = await checker.lintRule(ast, useDNS);
 
-        expect(result).toEqual(expected);
+        if (expected === null) {
+            expect(result).toEqual(null);
+
+            return;
+        }
+
+        if (expected.remove) {
+            expect(result.suggestedRule).toEqual(null);
+        } else {
+            const ruleText = agtree.RuleParser.generate(result.suggestedRule);
+            expect(ruleText).toEqual(expected.suggestedRuleText);
+        }
+
+        expect(result.deadDomains).toEqual(expected.deadDomains);
     };
 };
 
@@ -13,7 +28,7 @@ describe('Linter', () => {
         it(
             'suggest removing rule with a dead (with DNS double-check) domain in the pattern',
             testLintRule('||example.notexistingdomain^', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }, true),
         );
@@ -23,9 +38,19 @@ describe('Linter', () => {
         it(
             'suggest removing rule with a dead domain in the pattern',
             testLintRule('||example.notexistingdomain^', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
+        );
+
+        it(
+            'do not suggest removing IP addresses',
+            testLintRule('||1.2.3.4^', null),
+        );
+
+        it(
+            'do not suggest removing rules that target browser extensions',
+            testLintRule('@@||evernote.com^$domain=pioclpoplcdbaefihamjohnefbikjilc', null),
         );
 
         it(
@@ -93,7 +118,7 @@ describe('Linter', () => {
         it(
             'suggest removing the whole rule when all permitted domains are dead',
             testLintRule('||example.org^$domain=example.notexisting1|example.notexisting2', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexisting1', 'example.notexisting2'],
             }),
         );
@@ -117,7 +142,7 @@ describe('Linter', () => {
         it(
             'suggest removing the whole rule when domains in $denyallow are dead',
             testLintRule('||example.org^$denyallow=example.notexisting1', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexisting1'],
             }),
         );
@@ -137,7 +162,7 @@ describe('Linter', () => {
         it(
             'suggest removing an element hiding rule which was only for dead domains',
             testLintRule('example.notexistingdomain##banner', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );
@@ -161,7 +186,7 @@ describe('Linter', () => {
         it(
             'suggest removing the whole rule if it was an exception rule',
             testLintRule('~example.notexistingdomain#@#banner', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );
@@ -169,7 +194,7 @@ describe('Linter', () => {
         it(
             'suggest removing a CSS injection rule',
             testLintRule('example.notexistingdomain#$#banner { height: 0px; }', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );
@@ -177,7 +202,7 @@ describe('Linter', () => {
         it(
             'suggest removing a CSS injection exception rule',
             testLintRule('example.notexistingdomain#@$#banner { height: 0px; }', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );
@@ -193,7 +218,7 @@ describe('Linter', () => {
         it(
             'suggest removing an extended CSS rule',
             testLintRule('example.notexistingdomain#?#banner', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );
@@ -201,7 +226,7 @@ describe('Linter', () => {
         it(
             'suggest removing an extended CSS exception rule',
             testLintRule('example.notexistingdomain#@?#banner', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );
@@ -217,7 +242,7 @@ describe('Linter', () => {
         it(
             'suggest removing a scriptlet rule',
             testLintRule('example.notexistingdomain#%#//scriptlet("set-constant", "a", "1")', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );
@@ -225,7 +250,7 @@ describe('Linter', () => {
         it(
             'suggest removing a scriptlet exception rule',
             testLintRule('example.notexistingdomain#@%#//scriptlet("set-constant", "a", "1")', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );
@@ -241,7 +266,7 @@ describe('Linter', () => {
         it(
             'suggest removing an HTML filtering rule',
             testLintRule('example.notexistingdomain$$banner', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );
@@ -249,7 +274,7 @@ describe('Linter', () => {
         it(
             'suggest removing an HTML filtering exception rule',
             testLintRule('example.notexistingdomain$@$banner', {
-                suggestedRuleText: '',
+                remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
         );

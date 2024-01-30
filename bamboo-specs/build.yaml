@@ -5,7 +5,7 @@ plan:
   key: DDLBUILD
   name: dead-domains-linter  -  build
 variables:
-  dockerContainer: adguard/node-ssh:18.13--2
+  dockerContainer: adguard/node-ssh:18.13--3
 
 stages:
   - Build:
@@ -34,8 +34,6 @@ Build:
 
             # Fix mixed logs
             exec 2>&1
-
-            npm install -g pnpm
 
             # Install dependencies at the beginning.
             pnpm install --ignore-scripts --no-optional

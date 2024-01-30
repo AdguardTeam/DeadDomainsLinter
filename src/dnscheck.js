@@ -17,7 +17,7 @@ const resolveAsync = promisify(resolver.resolve).bind(resolver);
  * Checks if the domain has an A record.
  *
  * @param {String} domain - Domain name to check with a DNS query.
- * @returns {boolean} Returns true if the domain has an A record.
+ * @returns {Promise<boolean>} Returns true if the domain has an A record.
  */
 async function checkDomain(domain) {
     try {

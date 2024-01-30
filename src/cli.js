@@ -5,8 +5,18 @@ const consola = require('consola');
 // eslint-disable-next-line import/no-unresolved
 const consolaUtils = require('consola/utils');
 const glob = require('glob');
+const agtree = require('@adguard/agtree');
 const packageJson = require('../package.json');
 const linter = require('./linter');
+
+// Filter list lines are processing in parallel in chunks of this size. For
+// now we chose 10 as the test run shows it to provide good enough results
+// without overloading the web service.
+//
+// TODO(ameshkov): Consider making it configurable.
+const PARALLEL_CHUNK_SIZE = 10;
+
+// TODO(ameshkov): Consider splitting cli.js into the main file and other logic.
 
 // eslint-disable-next-line import/order
 const { argv } = require('yargs')
@@ -28,6 +38,10 @@ const { argv } = require('yargs')
         type: 'boolean',
         description: 'Double-check dead domains with a DNS query.',
     })
+    .option('commentout', {
+        type: 'boolean',
+        description: 'Comment out rules instead of removing them.',
+    })
     .option('auto', {
         alias: 'a',
         type: 'boolean',
@@ -45,6 +59,7 @@ const { argv } = require('yargs')
     })
     .default('input', '**/*.txt')
     .default('dnscheck', true)
+    .default('commentout', false)
     .default('auto', false)
     .default('show', false)
     .default('verbose', false)
@@ -61,7 +76,7 @@ if (argv.verbose) {
  * Helper function that checks the "automatic" flag first before asking user.
  *
  * @param {String} message - Question to ask the user in the prompt.
- * @returns {boolean} True if the user confirmed the action, false otherwise.
+ * @returns {Promise<boolean>} True if the user confirmed the action, false otherwise.
  */
 async function confirm(message) {
     if (argv.show) {
@@ -84,76 +99,129 @@ async function confirm(message) {
 }
 
 /**
- * Represents result of processing a line.
- * @typedef LineResult
+ * Represents result of processing a rule AST.
+ * @typedef AstResult
  *
- * @property {Number} lineNumber - Number of the line that was processed.
- * @property {String|undefined} modifiedLine - The line that needs to be used to replace
- * the original line.
- * @property {boolean|undefined} skip - If true, the line will be skipped.
- * @property {boolean|undefined} remove - If true, the line will be removed.
+ * @property {String} line - Text of the rule that's was processed.
+ * @property {Number} lineNumber - Number of that line.
+ * @property {import('./linter').LinterResult} linterResult - Result of linting
+ * that line.
  */
 
 /**
- * Processes the specified line and returns the line contents that needs to be
- * used to replace the original line.
+ * Process the rule AST from the specified file and returns the linting result
+ * or null if nothing needs to be changed.
  *
- * @param {String} line - The line to check.
- * @param {String} file - Path to the file where the line is from.
- * @param {Number} lineNumber - Line number (line are counted starting at 1).
- * @returns {LineResult} Instructs what needs to be done with the line.
+ * @param {String} file - Path to the file that's being processed.
+ * @param {agtree.AnyRule} ast - AST of the rule that's being processed.
+ * @returns {Promise<AstResult|null>} Returns null if nothing needs to be changed or
+ * AstResult if the linter found any issues.
  */
-async function processLine(line, file, lineNumber) {
-    consola.verbose(`Processing ${file}:${lineNumber}: ${line}`);
+async function processRuleAst(file, ast) {
+    const line = ast.raws.text;
+    const lineNumber = ast.loc.start.line;
 
     try {
-        const result = await linter.lintRule(line, argv.dnscheck);
+        consola.verbose(`Processing ${file}:${lineNumber}: ${line}`);
+
+        const linterResult = await linter.lintRule(ast, argv.dnscheck);
 
         // If the result is empty, the line can be simply skipped.
-        if (!result) {
-            return {
-                lineNumber,
-                skip: true,
-            };
+        if (!linterResult) {
+            return null;
         }
 
-        consola.info(`Found dead domains in a rule: ${result.deadDomains.join(', ')}`);
-        consola.info(consolaUtils.colorize('red', `- ${lineNumber}: ${line}`));
-        consola.info(consolaUtils.colorize('green', `+ ${lineNumber}: ${result.suggestedRuleText}`));
-
-        const confirmed = await confirm('Apply suggested fix?');
-        if (!confirmed) {
-            // The fix was not confirmed, skipping the line.
-            return {
-                lineNumber,
-                skip: true,
-            };
-        }
-
-        if (result.suggestedRuleText === '') {
-            return {
-                lineNumber,
-                remove: true,
-            };
+        if (linterResult.suggestedRule === null && argv.commentout) {
+            const suggestedRuleText = `! commented out by dead-domains-linter: ${line}`;
+            linterResult.suggestedRule = agtree.RuleParser.parse(suggestedRuleText);
         }
 
         return {
+            line,
             lineNumber,
-            modifiedLine: result.suggestedRuleText,
+            linterResult,
         };
     } catch (ex) {
         consola.warn(`Failed to process line ${lineNumber} due to ${ex}, skipping it`);
 
-        return {
-            lineNumber,
-            skip: true,
-        };
+        return null;
     }
 }
 
-// isEOL checks that the character is a known end of line character.
-function isEOL(c) {
-    return c === '\r\n' || c === '\n';
+/**
+ * Process the filter list AST and returns a list of changes that are confirmed
+ * by the user.
+ *
+ * @param {String} file - Path to the file that's being processed.
+ * @param {agtree.FilterList} listAst - AST of the filter list to process.
+ *
+ * @returns {Promise<Array<AstResult>>} Returns the list of changes that are confirmed.
+ */
+async function processListAst(file, listAst) {
+    consola.start(`Analyzing ${listAst.children.length} rules`);
+
+    let processing = 0;
+    let analyzedRules = 0;
+    let issuesCount = 0;
+
+    // eslint-disable-next-line no-await-in-loop
+    const processingResults = await Promise.all(listAst.children.map((ast) => {
+        return (async () => {
+            // Using a simple semaphore-like construction to limit the number of
+            // parallel processing tasks.
+            while (processing >= PARALLEL_CHUNK_SIZE) {
+                // Waiting for 10ms until the next check. 10ms is an arbitrarily
+                // chosen value, there's no big difference between 100-10-1.
+
+                // eslint-disable-next-line no-await-in-loop
+                await new Promise((resolve) => { setTimeout(resolve, 10); });
+            }
+
+            processing += 1;
+            try {
+                const result = await processRuleAst(file, ast);
+                if (result !== null) {
+                    issuesCount += 1;
+                }
+
+                return result;
+            } finally {
+                analyzedRules += 1;
+                processing -= 1;
+
+                if (analyzedRules % 100 === 0) {
+                    consola.info(`Analyzed ${analyzedRules} rules, found ${issuesCount} issues`);
+                }
+            }
+        })();
+    }));
+
+    const results = processingResults.filter((res) => res !== null);
+
+    consola.success(`Found ${results.length} issues`);
+
+    // Sort the results by line number in ascending order.
+    results.sort((a, b) => a.lineNumber - b.lineNumber);
+
+    // Now ask the user whether the changes are allowed.
+    const allowedResults = [];
+    for (let i = 0; i < results.length; i += 1) {
+        const result = results[i];
+        const { suggestedRule, deadDomains } = result.linterResult;
+        const suggestedRuleText = suggestedRule === null ? '' : suggestedRule.raws.text;
+
+        consola.info(`Found dead domains in a rule: ${deadDomains.join(', ')}`);
+        consola.info(consolaUtils.colorize('red', `- ${result.lineNumber}: ${result.line}`));
+        consola.info(consolaUtils.colorize('green', `+ ${result.lineNumber}: ${suggestedRuleText}`));
+
+        // eslint-disable-next-line no-await-in-loop
+        const confirmed = await confirm('Apply suggested fix?');
+        if (confirmed) {
+            allowedResults.push(result);
+        }
+    }
+
+    return allowedResults;
 }
 
 /**
@@ -166,26 +234,16 @@ async function processFile(file) {
 
     const content = fs.readFileSync(file, 'utf8');
 
-    // Split the file contents into lines preserving "new line" characters.
-    const lines = content.split(/(\r?\n)/);
+    // Parsing the whole filter list.
+    const listAst = agtree.FilterListParser.parse(content);
 
-    const results = [];
+    if (!listAst.children || listAst.children.length === 0) {
+        consola.info(`No rules found in ${file}`);
 
-    // TODO(ameshkov): Consider running several promises at once.
-    for (let i = 0; i < lines.length; i += 1) {
-        const line = lines[i];
-        const lineNumber = i + 1;
-
-        // Skip the new line characters, we'll only need them when we'll be
-        // modifying the file.
-        if (!isEOL(line)) {
-            // eslint-disable-next-line no-await-in-loop
-            const result = await processLine(line, file, lineNumber);
-            if (!result.skip) {
-                results.push(result);
-            }
-        }
+        return;
     }
+
+    const results = await processListAst(file, listAst);
 
     if (results.length === 0) {
         consola.info(`No changes to ${file}`);
@@ -194,8 +252,12 @@ async function processFile(file) {
     }
 
     // Count the number of lines that are to be removed.
-    const cntRemove = results.reduce((cnt, res) => { return res.remove ? cnt + 1 : cnt; }, 0);
-    const cntModify = results.reduce((cnt, res) => { return res.modifiedLine ? cnt + 1 : cnt; }, 0);
+    const cntRemove = results.reduce((cnt, res) => {
+        return res.linterResult.suggestedRule === null ? cnt + 1 : cnt;
+    }, 0);
+    const cntModify = results.reduce((cnt, res) => {
+        return res.linterResult.suggestedRule !== null ? cnt + 1 : cnt;
+    }, 0);
 
     const summaryMsg = `${consolaUtils.colorize('bold', `Summary for ${file}:`)}\n`
         + `${cntRemove} line${cntRemove.length > 1 || cntRemove.length === 0 ? 's' : ''} will be removed.\n`
@@ -217,22 +279,19 @@ async function processFile(file) {
             const result = results[i];
             const lineIdx = result.lineNumber - 1;
 
-            if (result.remove) {
-                lines.splice(lineIdx, 1);
-                if (isEOL(lines[lineIdx])) {
-                    // If the next line is a new line character, we need to
-                    // remove it as well.
-                    lines.splice(lineIdx, 1);
-                }
-            } else if (result.modifiedLine) {
-                lines[lineIdx] = result.modifiedLine;
+            if (result.linterResult.suggestedRule === null) {
+                listAst.children.splice(lineIdx, 1);
+            } else {
+                listAst.children[lineIdx] = result.linterResult.suggestedRule;
             }
         }
 
-        // Note, that we join the lines with empty string and not with a new
-        // line because the new line characters were actually preserved when
-        // we split the file contents.
-        fs.writeFileSync(file, lines.join(''));
+        // Generate a new filter list contents, use raw text when it's
+        // available in a rule AST.
+        const newContents = agtree.FilterListParser.generate(listAst, true);
+
+        // Update the filter list file.
+        fs.writeFileSync(file, newContents);
     } else {
         consola.info(`Skipping file ${file}`);
     }
@@ -244,10 +303,11 @@ async function processFile(file) {
 async function main() {
     consola.info(`Starting ${packageJson.name} v${packageJson.version}`);
 
-    const files = glob.globSync(argv.input);
+    const globExpression = argv.input;
+    const files = glob.globSync(globExpression);
     const plural = files.length > 1 || files.length === 0;
 
-    consola.info(`Found ${files.length} file${plural ? 's' : ''} matching ${argv.input}`);
+    consola.info(`Found ${files.length} file${plural ? 's' : ''} matching ${globExpression}`);
 
     for (let i = 0; i < files.length; i += 1) {
         const file = files[i];
@@ -261,6 +321,8 @@ async function main() {
             return;
         }
     }
+
+    consola.success('Finished successfully');
 }
 
 main();

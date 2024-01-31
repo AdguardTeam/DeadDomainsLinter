@@ -5,18 +5,9 @@ const consola = require('consola');
 // eslint-disable-next-line import/no-unresolved
 const consolaUtils = require('consola/utils');
 const glob = require('glob');
-const agtree = require('@adguard/agtree');
 const packageJson = require('../package.json');
-const linter = require('./linter');
-
-// Filter list lines are processing in parallel in chunks of this size. For
-// now we chose 10 as the test run shows it to provide good enough results
-// without overloading the web service.
-//
-// TODO(ameshkov): Consider making it configurable.
-const PARALLEL_CHUNK_SIZE = 10;
-
-// TODO(ameshkov): Consider splitting cli.js into the main file and other logic.
+const utils = require('./utils');
+const fileLinter = require('./filelinter');
 
 // eslint-disable-next-line import/order
 const { argv } = require('yargs')
@@ -41,6 +32,14 @@ const { argv } = require('yargs')
     .option('commentout', {
         type: 'boolean',
         description: 'Comment out rules instead of removing them.',
+    })
+    .option('export', {
+        type: 'string',
+        description: 'Export dead domains to the specified file instead of modifying the files.',
+    })
+    .option('import', {
+        type: 'string',
+        description: 'Import dead domains from the specified file and skip other checks.',
     })
     .option('auto', {
         alias: 'a',
@@ -73,229 +72,22 @@ if (argv.verbose) {
 }
 
 /**
- * Helper function that checks the "automatic" flag first before asking user.
+ * Extracts the list of dead domains from raw linting results.
  *
- * @param {string} message - Question to ask the user in the prompt.
- * @returns {Promise<boolean>} True if the user confirmed the action, false otherwise.
+ * @param {import('./filelinter').FileResult} fileResult - Result of linting
+ * the file.
+ * @returns {Array<string>} Array of dead domains.
  */
-async function confirm(message) {
-    if (argv.show) {
-        consola.info(`${message}: declined automatically`);
-
-        return false;
+function getDeadDomains(fileResult) {
+    if (!fileResult || !fileResult.results) {
+        return [];
     }
 
-    if (argv.auto) {
-        consola.info(`${message}: confirmed automatically`);
-
-        return true;
-    }
-
-    const answer = await consola.prompt(message, {
-        type: 'confirm',
-    });
-
-    return answer;
-}
-
-/**
- * Represents result of processing a rule AST.
- *
- * @typedef AstResult
- *
- * @property {string} line - Text of the rule that's was processed.
- * @property {number} lineNumber - Number of that line.
- * @property {import('./linter').LinterResult} linterResult - Result of linting
- * that line.
- */
-
-/**
- * Process the rule AST from the specified file and returns the linting result
- * or null if nothing needs to be changed.
- *
- * @param {string} file - Path to the file that's being processed.
- * @param {agtree.AnyRule} ast - AST of the rule that's being processed.
- * @returns {Promise<AstResult|null>} Returns null if nothing needs to be changed or
- * AstResult if the linter found any issues.
- */
-async function processRuleAst(file, ast) {
-    const line = ast.raws.text;
-    const lineNumber = ast.loc.start.line;
-
-    try {
-        consola.verbose(`Processing ${file}:${lineNumber}: ${line}`);
-
-        const linterResult = await linter.lintRule(ast, argv.dnscheck);
-
-        // If the result is empty, the line can be simply skipped.
-        if (!linterResult) {
-            return null;
-        }
-
-        if (linterResult.suggestedRule === null && argv.commentout) {
-            const suggestedRuleText = `! commented out by dead-domains-linter: ${line}`;
-            linterResult.suggestedRule = agtree.RuleParser.parse(suggestedRuleText);
-        }
-
-        return {
-            line,
-            lineNumber,
-            linterResult,
-        };
-    } catch (ex) {
-        consola.warn(`Failed to process line ${lineNumber} due to ${ex}, skipping it`);
-
-        return null;
-    }
-}
-
-/**
- * Process the filter list AST and returns a list of changes that are confirmed
- * by the user.
- *
- * @param {string} file - Path to the file that's being processed.
- * @param {agtree.FilterList} listAst - AST of the filter list to process.
- *
- * @returns {Promise<Array<AstResult>>} Returns the list of changes that are confirmed.
- */
-async function processListAst(file, listAst) {
-    consola.start(`Analyzing ${listAst.children.length} rules`);
-
-    let processing = 0;
-    let analyzedRules = 0;
-    let issuesCount = 0;
-
-    // eslint-disable-next-line no-await-in-loop
-    const processingResults = await Promise.all(listAst.children.map((ast) => {
-        return (async () => {
-            // Using a simple semaphore-like construction to limit the number of
-            // parallel processing tasks.
-            while (processing >= PARALLEL_CHUNK_SIZE) {
-                // Waiting for 10ms until the next check. 10ms is an arbitrarily
-                // chosen value, there's no big difference between 100-10-1.
-
-                // eslint-disable-next-line no-await-in-loop
-                await new Promise((resolve) => { setTimeout(resolve, 10); });
-            }
-
-            processing += 1;
-            try {
-                const result = await processRuleAst(file, ast);
-                if (result !== null) {
-                    issuesCount += 1;
-                }
-
-                return result;
-            } finally {
-                analyzedRules += 1;
-                processing -= 1;
-
-                if (analyzedRules % 100 === 0) {
-                    consola.info(`Analyzed ${analyzedRules} rules, found ${issuesCount} issues`);
-                }
-            }
-        })();
-    }));
-
-    const results = processingResults.filter((res) => res !== null);
-
-    consola.success(`Found ${results.length} issues`);
-
-    // Sort the results by line number in ascending order.
-    results.sort((a, b) => a.lineNumber - b.lineNumber);
-
-    // Now ask the user whether the changes are allowed.
-    const allowedResults = [];
-    for (let i = 0; i < results.length; i += 1) {
-        const result = results[i];
-        const { suggestedRule, deadDomains } = result.linterResult;
-        const suggestedRuleText = suggestedRule === null ? '' : suggestedRule.raws.text;
-
-        consola.info(`Found dead domains in a rule: ${deadDomains.join(', ')}`);
-        consola.info(consolaUtils.colorize('red', `- ${result.lineNumber}: ${result.line}`));
-        consola.info(consolaUtils.colorize('green', `+ ${result.lineNumber}: ${suggestedRuleText}`));
-
-        // eslint-disable-next-line no-await-in-loop
-        const confirmed = await confirm('Apply suggested fix?');
-        if (confirmed) {
-            allowedResults.push(result);
-        }
-    }
-
-    return allowedResults;
-}
-
-/**
- * Processes the specified file.
- *
- * @param {string} file - Path to the file that the program should process.
- */
-async function processFile(file) {
-    consola.info(consolaUtils.colorize('bold', `Processing file ${file}`));
-
-    const content = fs.readFileSync(file, 'utf8');
-
-    // Parsing the whole filter list.
-    const listAst = agtree.FilterListParser.parse(content);
-
-    if (!listAst.children || listAst.children.length === 0) {
-        consola.info(`No rules found in ${file}`);
-
-        return;
-    }
-
-    const results = await processListAst(file, listAst);
-
-    if (results.length === 0) {
-        consola.info(`No changes to ${file}`);
-
-        return;
-    }
-
-    // Count the number of lines that are to be removed.
-    const cntRemove = results.reduce((cnt, res) => {
-        return res.linterResult.suggestedRule === null ? cnt + 1 : cnt;
-    }, 0);
-    const cntModify = results.reduce((cnt, res) => {
-        return res.linterResult.suggestedRule !== null ? cnt + 1 : cnt;
-    }, 0);
-
-    const summaryMsg = `${consolaUtils.colorize('bold', `Summary for ${file}:`)}\n`
-        + `${cntRemove} line${cntRemove.length > 1 || cntRemove.length === 0 ? 's' : ''} will be removed.\n`
-        + `${cntModify} line${cntModify.length > 1 || cntModify.length === 0 ? 's' : ''} will be modified.`;
-    consola.box(summaryMsg);
-
-    const confirmed = await confirm('Apply modifications to the file?');
-
-    if (confirmed) {
-        consola.info(`Applying modifications to ${file}`);
-
-        // Sort result by lineNumber descending so that we could use it for the
-        // original array modification.
-        results.sort((a, b) => b.lineNumber - a.lineNumber);
-
-        // Go through the results array in and either remove or modify the
-        // lines.
-        for (let i = 0; i < results.length; i += 1) {
-            const result = results[i];
-            const lineIdx = result.lineNumber - 1;
-
-            if (result.linterResult.suggestedRule === null) {
-                listAst.children.splice(lineIdx, 1);
-            } else {
-                listAst.children[lineIdx] = result.linterResult.suggestedRule;
-            }
-        }
-
-        // Generate a new filter list contents, use raw text when it's
-        // available in a rule AST.
-        const newContents = agtree.FilterListParser.generate(listAst, true);
-
-        // Update the filter list file.
-        fs.writeFileSync(file, newContents);
-    } else {
-        consola.info(`Skipping file ${file}`);
-    }
+    return fileResult.results.map((result) => {
+        return result.linterResult.deadDomains;
+    }).reduce((acc, val) => {
+        return acc.concat(val);
+    }, []);
 }
 
 /**
@@ -308,19 +100,64 @@ async function main() {
     const files = glob.globSync(globExpression);
     const plural = files.length > 1 || files.length === 0;
 
+    let predefinedDomains;
+    if (argv.import) {
+        consola.info(`Importing dead domains from ${argv.import}, other checks will be skipped`);
+
+        try {
+            predefinedDomains = fs.readFileSync(argv.import).toString()
+                .split('\r?\n')
+                .filter((line) => line.trim() !== '');
+        } catch (ex) {
+            consola.error(`Failed to read from ${argv.import}: ${ex}`);
+
+            process.exit(1);
+        }
+
+        consola.info(`Imported ${predefinedDomains.length} dead domains`);
+    }
+
     consola.info(`Found ${files.length} file${plural ? 's' : ''} matching ${globExpression}`);
+
+    // This array is used when export is enabled.
+    const deadDomains = [];
 
     for (let i = 0; i < files.length; i += 1) {
         const file = files[i];
 
         try {
+            consola.info(consolaUtils.colorize('bold', `Processing file ${file}`));
+
+            const linterOptions = {
+                show: argv.show,
+                auto: argv.auto || !!argv.export,
+                useDNS: argv.dnscheck,
+                commentOut: argv.commentout,
+                deadDomains: predefinedDomains,
+            };
+
             // eslint-disable-next-line no-await-in-loop
-            await processFile(file);
+            const fileResult = await fileLinter.lintFile(file, linterOptions);
+
+            if (fileResult !== null) {
+                if (argv.export) {
+                    deadDomains.push(...getDeadDomains(fileResult));
+                } else {
+                    // eslint-disable-next-line no-await-in-loop
+                    await fileLinter.applyFileChanges(file, fileResult, linterOptions);
+                }
+            }
         } catch (ex) {
             consola.error(`Failed to process ${file} due to ${ex}`);
 
-            return;
+            process.exit(1);
         }
+    }
+
+    if (argv.export) {
+        consola.info(`Exporting the list of dead domains to ${argv.export}`);
+        const uniqueDomains = utils.unique(deadDomains);
+        fs.writeFileSync(argv.export, uniqueDomains.join('\n'));
     }
 
     consola.success('Finished successfully');

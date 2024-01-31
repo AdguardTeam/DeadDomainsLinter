@@ -281,6 +281,8 @@ function modifyNetworkRule(ast, deadDomains) {
                 modifierIdxToRemove.push(i);
             }
 
+            // TODO(ameshkov): Refactor extractModifierDomains so that we could
+            // use DomainListParser.generate here.
             modifier.value.value = filteredDomains.map(
                 (domain) => {
                     return domain.negated ? `${agtree.NEGATION_MARKER}${domain.domain}` : domain.domain;
@@ -338,12 +340,24 @@ const domainsCheckCache = {};
  * urlfilter web service to check which of them are dead.
  *
  * @param {Array<string>} domains - Parts of the rule with domains.
- * @param {boolean} useDNS - Double-check dead domains with a DNS query.
+ * @param {LintOptions} options - Configuration for the linting process.
  * @returns {Promise<Array<string>>} A list of dead domains.
  */
-async function findDeadDomains(domains, useDNS) {
+async function findDeadDomains(domains, options) {
     const deadDomains = [];
     const domainsToCheck = [];
+
+    // If we have a pre-defined list of domains, skip all other checks and just
+    // go through it.
+    if (options.deadDomains && options.deadDomains.length > 0) {
+        domains.forEach((domain) => {
+            if (options.deadDomains.includes(domain)) {
+                deadDomains.push(domain);
+            }
+        });
+
+        return utils.unique(deadDomains);
+    }
 
     // eslint-disable-next-line no-restricted-syntax
     for (const domain of utils.unique(domains)) {
@@ -358,7 +372,7 @@ async function findDeadDomains(domains, useDNS) {
 
     const checkResult = await urlfilter.findDeadDomains(domainsToCheck);
 
-    if (useDNS) {
+    if (options.useDNS) {
         // eslint-disable-next-line no-restricted-syntax
         for (const domain of checkResult) {
             // eslint-disable-next-line no-await-in-loop
@@ -385,6 +399,17 @@ async function findDeadDomains(domains, useDNS) {
 }
 
 /**
+ * Configures the linting process.
+ *
+ * @typedef {object} LintOptions
+ *
+ * @property {boolean} useDNS - If true, use a DNS query to doublecheck domains
+ * returned by the urlfilter web service.
+ * @property {Array<string>} deadDomains - Pre-defined list of dead domains. If
+ * it is specified, skip all other checks.
+ */
+
+/**
  * Result of the dead domains check. Contains the list of dead domains found
  * in the rule and the suggested rule text after removing dead domains.
  *
@@ -401,16 +426,16 @@ async function findDeadDomains(domains, useDNS) {
  * found there and checks if they are alive using the urlfilter web service.
  *
  * @param {string} ast - AST of the rule that we're going to check.
- * @param {boolean} useDNS - Double-check the dead domains with a DNS query.
+ * @param {LintOptions} options - Configuration for the linting process.
  * @returns {Promise<LinterResult|null>} Result of the rule linting.
  */
-async function lintRule(ast, useDNS = false) {
+async function lintRule(ast, options) {
     const domains = extractRuleDomains(ast);
     if (!domains || domains.length === 0) {
         return null;
     }
 
-    const deadDomains = await findDeadDomains(domains, useDNS);
+    const deadDomains = await findDeadDomains(domains, options);
 
     if (!deadDomains || deadDomains.length === 0) {
         return null;

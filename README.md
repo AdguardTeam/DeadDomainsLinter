@@ -14,6 +14,8 @@ In the future, it should be replaced with an [AGLint rule][aglintrule].
 
 ## How to use
 
+### Installation and update
+
 First of all, install the dead-domains-linter:
 
 ```shell
@@ -27,6 +29,8 @@ npm i -g @adguard/dead-domains-linter
 > ```shell
 > npm update -g @adguard/dead-domains-linter
 > ```
+
+### Interactive mode
 
 By default it runs in interactive mode, scans the current directory and all its
 subdirectories for `*.txt` files, and asks the user to apply suggested changes.
@@ -47,6 +51,8 @@ scan:
 dead-domains-linter -i filter.txt
 ```
 
+### Automatic and show-only mode
+
 You can allow it to automatically apply suggestions by passing the `--auto`
 flag:
 
@@ -60,6 +66,8 @@ Alternatively, you can run it in the "show only" mode:
 dead-domains-linter --show
 ```
 
+### Commenting rules out instead of removing them
+
 One more useful feature would be to comment out filter rules that contain dead
 domains instead of removing them. You can enable this feature by passing the
 `--commentout=true` flag:
@@ -67,6 +75,28 @@ domains instead of removing them. You can enable this feature by passing the
 ```shell
 dead-domains-linter --commentout
 ```
+
+### Exporting and using a pre-defined list of domains
+
+Instead of immediately modifying the filter list, you may opt to export the
+list of dead domains so that you could carefully review it. For instance, the
+command below scans `filter.txt` for dead domains and exports this list to
+`out.txt`.
+
+```shell
+dead-domains-linter -i filter.txt --export=domains.txt
+```
+
+When you finish the review and clean up the list, you can make the tool use it
+exclusively to modify filter lists. For instance, the command below scans
+`filter.txt` for all domains that are in `domains.txt` and removes them from
+the filter list.
+
+```shell
+dead-domains-linter -i filter.txt --import=domains.txt --auto
+```
+
+### Disabling DNS check
 
 > [!IMPORTANT]
 > Please read this if you maintain a filter list with a large number of users.
@@ -93,7 +123,7 @@ dead-domains-linter --dnscheck=false
 
 [filterpolicy]: https://adguard.com/kb/general/ad-filtering/filter-policy/
 
-Full usage info:
+### Full usage info
 
 ```shell
 Usage: dead-domains-linter [options]
@@ -105,6 +135,10 @@ Options:
                                                        [boolean] [default: true]
       --commentout  Comment out rules instead of removing them.
                                                       [boolean] [default: false]
+      --export      Export dead domains to the specified file instead of
+                    modifying the files.                                [string]
+      --import      Import dead domains from the specified file and skip other
+                    checks.                                             [string]
   -a, --auto        Automatically apply suggested fixes without asking the user.
                                                       [boolean] [default: false]
   -s, --show        Show suggestions without applying them.

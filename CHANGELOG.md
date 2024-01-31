@@ -6,16 +6,23 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 
 ## [Unreleased][unreleased]
 
-[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.14...master
+[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.15...master
 
-## [1.0.14] - 2024-01-31
+## [1.0.15] - 2024-01-31
+
+### Added
+
+- Added an option to use a pre-defined list of dead domains from a file. [#20][#20]
+- Added an option to export the list of dead domains to a file. [#8][#8]
 
 ### Fixed
 
 - Fixed the issue with keeping negated domains in a network rule [#19][#19]
 
+[#8]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/8
 [#19]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/19
-[1.0.14]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.13...v1.0.14
+[#20]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/20
+[1.0.15]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.13...v1.0.15
 
 ## [1.0.13] - 2024-01-31
 

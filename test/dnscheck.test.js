@@ -12,4 +12,15 @@ describe('dnscheck', () => {
 
         expect(result).toBe(false);
     });
+
+    it('check a domain that only has a www. record', async () => {
+        const noWwwExists = await dnscheck.domainExists('city.kawasaki.jp');
+        // Make sure that there's no A record for the domain.
+        // If it appears, we'll need to change the domain for this test.
+        expect(noWwwExists).toBe(false);
+
+        const result = await dnscheck.checkDomain('city.kawasaki.jp');
+
+        expect(result).toBe(true);
+    });
 });

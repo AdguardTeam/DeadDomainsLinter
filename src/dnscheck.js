@@ -19,7 +19,7 @@ const resolveAsync = promisify(resolver.resolve).bind(resolver);
  * @param {String} domain - Domain name to check with a DNS query.
  * @returns {Promise<boolean>} Returns true if the domain has an A record.
  */
-async function checkDomain(domain) {
+async function domainExists(domain) {
     try {
         const addresses = await resolveAsync(domain, 'A');
 
@@ -29,6 +29,33 @@ async function checkDomain(domain) {
     }
 }
 
+/**
+ * Checks if the domain name exists with one or more DNS queries.
+ *
+ * @param {String} domain - Domain name to check.
+ * @returns {Promise<boolean>} Returns true if the domain is considered alive.
+ */
+async function checkDomain(domain) {
+    let exists = await domainExists(domain);
+
+    if (exists) {
+        return true;
+    }
+
+    if (domain.startsWith('www.')) {
+        // If this is a www. domain name, there's no need to doublecheck it.
+        return false;
+    }
+
+    // Double-check a www. version of a domain name. We do this because there
+    // are some cases when it's necessary:
+    // https://github.com/AdguardTeam/DeadDomainsLinter/issues/16
+    exists = domainExists(`www.${domain}`);
+
+    return exists;
+}
+
 module.exports = {
     checkDomain,
+    domainExists,
 };

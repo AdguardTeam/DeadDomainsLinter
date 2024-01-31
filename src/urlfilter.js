@@ -62,7 +62,8 @@ function dnsLookup(hostname, options, cb) {
  * service to do that.
  *
  * @param {Array<String>} domains domains to check.
- * @param {Number} chunkSize configures the size of chunks for checking large arrays.
+ * @param {Number} chunkSize configures the size of chunks for checking large
+ * arrays.
  * @returns {Promise<Array<String>>} returns the list of dead domains.
  */
 async function findDeadDomains(domains, chunkSize = CHUNK_SIZE) {

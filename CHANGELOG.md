@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 
 ## [Unreleased][unreleased]
 
+- Fixed the issue with some rarely visited domains marked as dead [#16][#16]
+
+[#16]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/16
+[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.8...master
+
 ## [1.0.8] - 2024-01-31
 
 ### Fixed
@@ -40,7 +45,6 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 [#5]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/5
 [#6]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/6
 
-[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.8...master
 [1.0.8]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.6...v1.0.8
 [1.0.6]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.4...v1.0.6
 [keepachangelog]: https://keepachangelog.com/en/1.0.0/

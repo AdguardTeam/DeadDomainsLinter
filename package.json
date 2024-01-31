@@ -1,6 +1,6 @@
 {
   "name": "@adguard/dead-domains-linter",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Simple tool to check adblock filtering rules for dead domains.",
   "keywords": [
     "adblock",

@@ -21,7 +21,7 @@ const PATTERN_DOMAIN_REGEX = (() => {
         return str.replace(/\//g, '\\/').replace(/\|/g, '\\|');
     }).join('|');
 
-    return new RegExp(`^(@@)?(${startRegex})([a-z0-9-.]+)(\\^|\\/|$)`, 'i');
+    return new RegExp(`^(@@)?(${startRegex})([a-z0-9-.]+)(\\^|\\/)`, 'i');
 })();
 
 /**

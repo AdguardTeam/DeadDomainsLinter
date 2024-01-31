@@ -60,6 +60,14 @@ describe('Linter', () => {
         );
 
         it(
+            'suggest removing rule with a dead FQDN in the pattern',
+            testLintRule('||example.notexistingdomain.^', {
+                remove: true,
+                deadDomains: ['example.notexistingdomain.'],
+            }),
+        );
+
+        it(
             'suggest removing rule with a dead domain in the pattern with ://',
             testLintRule('://example.notexistingdomain/thisissomepath/tosomewhere', {
                 remove: true,
@@ -86,6 +94,11 @@ describe('Linter', () => {
         it(
             'do not suggest removing IP addresses',
             testLintRule('||1.2.3.4^', null),
+        );
+
+        it(
+            'do not suggest removing IP ranges',
+            testLintRule('||203.195.121.$popup', null),
         );
 
         it(

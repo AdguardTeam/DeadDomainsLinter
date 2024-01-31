@@ -6,10 +6,19 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 
 ## [Unreleased][unreleased]
 
+[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.8...master
+
+## [1.0.13] - 2024-01-31
+
+### Fixed
+
 - Fixed the issue with some rarely visited domains marked as dead [#16][#16]
+- Fixed the issue with rules that target IP ranges [#17][#17]
+- Fixed the issue with checking FQDN in rules [#18][#18]
 
 [#16]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/16
-[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.8...master
+[#17]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/17
+[#18]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/18
 
 ## [1.0.8] - 2024-01-31
 

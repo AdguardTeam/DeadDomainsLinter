@@ -19,6 +19,12 @@ describe('urlfilter', () => {
         expect(result).toEqual(['example.atatatata.baababbaba']);
     });
 
+    it('check an fqdn domain name', async () => {
+        const result = await urlfilter.findDeadDomains(['example.notexisting.']);
+
+        expect(result).toEqual(['example.notexisting.']);
+    });
+
     it('checks lots of domains using two chunks', async () => {
         const domains = [];
         for (let i = 0; i < 10; i += 1) {

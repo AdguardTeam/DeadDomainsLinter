@@ -58,6 +58,17 @@ function dnsLookup(hostname, options, cb) {
 }
 
 /**
+ * Removes trailing dot from an fully qualified domain name. The reason for
+ * that is that urlfilter service does not know how to work with FQDN.
+ *
+ * @param {String} domain - The domain name to trim.
+ * @returns {String} The domain name without trailing dot.
+ */
+function trimFqdn(domain) {
+    return domain.endsWith('.') ? domain.slice(0, -1) : domain;
+}
+
+/**
  * This function looks for dead domains among the specified ones. It uses a web
  * service to do that.
  *
@@ -78,7 +89,8 @@ async function findDeadDomains(domains, chunkSize = CHUNK_SIZE) {
     // Compose and send requests for each chunk
     // eslint-disable-next-line no-restricted-syntax
     for (const chunk of chunks) {
-        const url = `${URLFILTER_URL}?${chunk.map((domain) => `domain=${encodeURIComponent(domain)}`).join('&')}`;
+        const queryParams = chunk.map((domain) => `domain=${encodeURIComponent(trimFqdn(domain))}`).join('&');
+        const url = `${URLFILTER_URL}?${queryParams}`;
 
         try {
             // eslint-disable-next-line no-await-in-loop
@@ -98,7 +110,7 @@ async function findDeadDomains(domains, chunkSize = CHUNK_SIZE) {
             // Iterate over the domains in the chunk
             // eslint-disable-next-line no-restricted-syntax
             for (const domain of chunk) {
-                const domainData = data[domain];
+                const domainData = data[trimFqdn(domain)];
                 if (domainData && domainData.info.registered_domain_used_last_24_hours === false) {
                     result.push(domain);
                 }

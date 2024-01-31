@@ -17,6 +17,9 @@ dependencies:
   node-fetch:
     specifier: ^2.7.0
     version: 2.7.0
+  tldts:
+    specifier: ^6.1.4
+    version: 6.1.4
   yargs:
     specifier: ^17.7.2
     version: 17.7.2
@@ -3449,11 +3452,22 @@ packages:
     resolution: {integrity: sha512-mutrEUgG2sp0e/MIAnv9TbSLR0IPbvmAImpzqul5O/HJ2XM1/I1sajchQ/fbj0fPdA31IiuWde8EUhfwyldY1Q==}
     dev: false
 
+  /tldts-core@6.1.4:
+    resolution: {integrity: sha512-9rlteMsuqWQaWlLhnqCOeAXW1jqahlBHXOhCHu1GkkNBbjitbEqhDQC1Br6W/2PZJTTh8f+QIk5GstyZFC26Bg==}
+    dev: false
+
   /tldts@5.7.112:
     resolution: {integrity: sha512-6VSJ/C0uBtc2PQlLsp4IT8MIk2UUh6qVeXB1HZtK+0HiXlAPzNcfF3p2WM9RqCO/2X1PIa4danlBLPoC2/Tc7A==}
     hasBin: true
     dependencies:
       tldts-core: 5.7.112
+    dev: false
+
+  /tldts@6.1.4:
+    resolution: {integrity: sha512-eplXjucWEMwmGd8PSI/cjwGid0dVRdLZwO+x8cUTzfgA/u9wP9D5C6qcg42MMBgBeEcgDiUTqH7wBlTYLIODWQ==}
+    hasBin: true
+    dependencies:
+      tldts-core: 6.1.4
     dev: false
 
   /tmpl@1.0.5:

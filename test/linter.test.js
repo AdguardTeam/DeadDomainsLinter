@@ -89,6 +89,16 @@ describe('Linter', () => {
         );
 
         it(
+            'do not suggest removing .onion domains',
+            testLintRule('||example.onion^', null),
+        );
+
+        it(
+            'do not suggest removing .lib domains',
+            testLintRule('||example.lib^', null),
+        );
+
+        it(
             'do not suggest removing rules that target browser extensions',
             testLintRule('@@||evernote.com^$domain=pioclpoplcdbaefihamjohnefbikjilc', null),
         );

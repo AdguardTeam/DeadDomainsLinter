@@ -1,3 +1,5 @@
+const tldts = require('tldts');
+
 /**
  * Helper function that takes an array and returns a new one without any
  * duplicate items.
@@ -8,34 +10,46 @@ function unique(arr) {
     return [...new Set([].concat(...arr))];
 }
 
+// A list of TLD that we ignore and don't check for existence for technical
+// reasons.
+const ALLOW_TLD = new Set([
+    'onion', // Tor
+    'lib', 'coin', 'bazar', 'emc', // EmerCoin
+    'bit', // Namecoin
+    'sats', 'ord', 'gm', // SATS domains
+]);
+
 /**
- * Checks if the given domain is valid. This is a very simple check that only
- * checks of allowed characters, but it's enough to filter out domain patterns
- * and regexes that can be met in filtering rules.
+ * Checks if the given domain is valid for our dead domains check.
  *
  * @param {String} domain - The domain name to check.
  * @returns {boolean} Returns true if the domain is valid, false otherwise.
  */
 function validDomain(domain) {
-    if (domain.endsWith('.onion')) {
-        // Note, that we don't count .onion domains valid as their existence
-        // cannot be verified with the urlfilter service.
+    const result = tldts.parse(domain);
+
+    if (!result?.domain) {
         return false;
     }
 
-    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(domain)) {
-        // IPv4 addresses cannot be verified too so just ignore them too.
-        // Don't check for IPv6 as they won't be matched by the domain regex.
+    if (result.isIp) {
+        // IP addresses cannot be verified too so just ignore them too.
         return false;
     }
 
-    if (!domain.includes('.')) {
+    if (ALLOW_TLD.has(result.publicSuffix)) {
+        // Do not check TLDs that are in use, but we cannot check them for
+        // existence.
+        return false;
+    }
+
+    if (result.domainWithoutSuffix === '') {
         // Ignore top-level domains to avoid false positives on things like:
         // https://github.com/AdguardTeam/DeadDomainsLinter/issues/6
         return false;
     }
 
-    return domain.match(/^[a-z0-9.-]+$/i) !== null;
+    return true;
 }
 
 module.exports = {

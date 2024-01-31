@@ -20,7 +20,16 @@ First of all, install the dead-domains-linter:
 npm i -g @adguard/dead-domains-linter
 ```
 
-By default it runs in interactive mode, scans the current directory and all it's subdirectories for `*.txt` files, and asks the user to apply suggested changes.
+> [!NOTE]
+> If you have it installed and need to update to a newer version, run this
+> command:
+>
+> ```shell
+> npm update -g @adguard/dead-domains-linter
+> ```
+
+By default it runs in interactive mode, scans the current directory and all its
+subdirectories for `*.txt` files, and asks the user to apply suggested changes.
 
 Just run it in the directory with your filter lists to see how it works:
 
@@ -31,13 +40,15 @@ dead-domains-linter
 Here's how the interactive mode looks like:
 ![dead-domain-linter](https://cdn.adtidy.org/website/github.com/DeadDomainsLinter/default-config.png)
 
-You can specify a custom glob expression to select files that the tool will scan:
+You can specify a custom glob expression to select files that the tool will
+scan:
 
 ```shell
 dead-domains-linter -i filter.txt
 ```
 
-You can allow it to automatically apply suggestions by passing the `--auto` flag:
+You can allow it to automatically apply suggestions by passing the `--auto`
+flag:
 
 ```shell
 dead-domains-linter --auto
@@ -119,7 +130,3 @@ Then you can use the following commands:
 * `pnpm install` - install dependencies.
 * `pnpm run lint` - lint the code.
 * `pnpm run test` - run the unit-tests.
-
-## TODO
-
-* [ ] Add cometic rules modifiers support, for now they are simply ignored

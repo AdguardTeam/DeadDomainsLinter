@@ -6,9 +6,9 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 
 ## [Unreleased][unreleased]
 
-[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.15...master
+[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.16...master
 
-## [1.0.15] - 2024-01-31
+## [1.0.16] - 2024-01-31
 
 ### Added
 
@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 [#8]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/8
 [#19]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/19
 [#20]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/20
-[1.0.15]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.13...v1.0.15
+[1.0.16]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.13...v1.0.16
 
 ## [1.0.13] - 2024-01-31
 

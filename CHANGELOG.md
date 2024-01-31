@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 
 ## [Unreleased][unreleased]
 
-[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.8...master
+[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.14...master
+
+## [1.0.14] - 2024-01-31
+
+### Fixed
+
+- Fixed the issue with keeping negated domains in a network rule [#19][#19]
+
+[#19]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/19
+[1.0.14]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.13...v1.0.14
 
 ## [1.0.13] - 2024-01-31
 
@@ -19,6 +28,7 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 [#16]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/16
 [#17]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/17
 [#18]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/18
+[1.0.13]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.8...v1.0.13
 
 ## [1.0.8] - 2024-01-31
 
@@ -29,6 +39,7 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 
 [#11]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/11
 [#13]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/13
+[1.0.8]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.6...v1.0.8
 
 ## [1.0.6] - 2024-01-29
 
@@ -53,8 +64,7 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 [#1]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/1
 [#5]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/5
 [#6]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/6
-
-[1.0.8]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.6...v1.0.8
 [1.0.6]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.4...v1.0.6
+
 [keepachangelog]: https://keepachangelog.com/en/1.0.0/
 [semver]: https://semver.org/spec/v2.0.0.html

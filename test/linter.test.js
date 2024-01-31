@@ -187,6 +187,14 @@ describe('Linter', () => {
         );
 
         it(
+            'suggest removing one negated domain of two from a network rule',
+            testLintRule('||example.org^$domain=~example.org|~example.notexisting', {
+                suggestedRuleText: '||example.org^$domain=~example.org',
+                deadDomains: ['example.notexisting'],
+            }),
+        );
+
+        it(
             'suggest removing the whole $domain modifier when it had only dead negated domains',
             testLintRule('||example.org^$domain=~example.notexisting1|~example.notexisting2', {
                 suggestedRuleText: '||example.org^',
@@ -251,6 +259,14 @@ describe('Linter', () => {
             testLintRule('~example.notexistingdomain#@#banner', {
                 remove: true,
                 deadDomains: ['example.notexistingdomain'],
+            }),
+        );
+
+        it(
+            'suggest removing one negated domain of two from a network rule',
+            testLintRule('~example.org,~example.notexisting##banner', {
+                suggestedRuleText: '~example.org##banner',
+                deadDomains: ['example.notexisting'],
             }),
         );
 

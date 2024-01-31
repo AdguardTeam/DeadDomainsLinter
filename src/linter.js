@@ -280,7 +280,11 @@ function modifyNetworkRule(ast, deadDomains) {
                 modifierIdxToRemove.push(i);
             }
 
-            modifier.value.value = filteredDomains.map((domain) => domain.domain).join(agtree.PIPE_MODIFIER_SEPARATOR);
+            modifier.value.value = filteredDomains.map(
+                (domain) => {
+                    return domain.negated ? `${agtree.NEGATION_MARKER}${domain.domain}` : domain.domain;
+                },
+            ).join(agtree.PIPE_MODIFIER_SEPARATOR);
         }
     }
 

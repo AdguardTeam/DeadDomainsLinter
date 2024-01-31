@@ -75,7 +75,7 @@ if (argv.verbose) {
 /**
  * Helper function that checks the "automatic" flag first before asking user.
  *
- * @param {String} message - Question to ask the user in the prompt.
+ * @param {string} message - Question to ask the user in the prompt.
  * @returns {Promise<boolean>} True if the user confirmed the action, false otherwise.
  */
 async function confirm(message) {
@@ -100,10 +100,11 @@ async function confirm(message) {
 
 /**
  * Represents result of processing a rule AST.
+ *
  * @typedef AstResult
  *
- * @property {String} line - Text of the rule that's was processed.
- * @property {Number} lineNumber - Number of that line.
+ * @property {string} line - Text of the rule that's was processed.
+ * @property {number} lineNumber - Number of that line.
  * @property {import('./linter').LinterResult} linterResult - Result of linting
  * that line.
  */
@@ -112,7 +113,7 @@ async function confirm(message) {
  * Process the rule AST from the specified file and returns the linting result
  * or null if nothing needs to be changed.
  *
- * @param {String} file - Path to the file that's being processed.
+ * @param {string} file - Path to the file that's being processed.
  * @param {agtree.AnyRule} ast - AST of the rule that's being processed.
  * @returns {Promise<AstResult|null>} Returns null if nothing needs to be changed or
  * AstResult if the linter found any issues.
@@ -152,7 +153,7 @@ async function processRuleAst(file, ast) {
  * Process the filter list AST and returns a list of changes that are confirmed
  * by the user.
  *
- * @param {String} file - Path to the file that's being processed.
+ * @param {string} file - Path to the file that's being processed.
  * @param {agtree.FilterList} listAst - AST of the filter list to process.
  *
  * @returns {Promise<Array<AstResult>>} Returns the list of changes that are confirmed.
@@ -227,7 +228,7 @@ async function processListAst(file, listAst) {
 /**
  * Processes the specified file.
  *
- * @param {String} file - Path to the file that the program should process.
+ * @param {string} file - Path to the file that the program should process.
  */
 async function processFile(file) {
     consola.info(consolaUtils.colorize('bold', `Processing file ${file}`));

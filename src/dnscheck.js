@@ -16,7 +16,7 @@ const resolveAsync = promisify(resolver.resolve).bind(resolver);
 /**
  * Checks if the domain has an A record.
  *
- * @param {String} domain - Domain name to check with a DNS query.
+ * @param {string} domain - Domain name to check with a DNS query.
  * @returns {Promise<boolean>} Returns true if the domain has an A record.
  */
 async function domainExists(domain) {
@@ -32,7 +32,7 @@ async function domainExists(domain) {
 /**
  * Checks if the domain name exists with one or more DNS queries.
  *
- * @param {String} domain - Domain name to check.
+ * @param {string} domain - Domain name to check.
  * @returns {Promise<boolean>} Returns true if the domain is considered alive.
  */
 async function checkDomain(domain) {

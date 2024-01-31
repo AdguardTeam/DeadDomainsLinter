@@ -1,6 +1,7 @@
 module.exports = {
     extends: [
         'airbnb-base',
+        'plugin:jsdoc/recommended',
     ],
     parser: '@babel/eslint-parser',
     parserOptions: {
@@ -23,5 +24,12 @@ module.exports = {
         'import/prefer-default-export': 'off',
         'arrow-body-style': 'off',
         'import/no-extraneous-dependencies': 'off',
+        'jsdoc/tag-lines': [
+            'warn',
+            'any',
+            {
+                startLines: 1,
+            },
+        ],
     },
 };

@@ -5,7 +5,7 @@ const fetch = require('node-fetch');
 /**
  * This function uses urlfilter.adtidy.org to check if domains are alive or not.
  *
- * @param {Array<String>} domains an array of domains to be analyzed.
+ * @param {Array<string>} domains an array of domains to be analyzed.
  */
 const URLFILTER_URL = 'https://urlfilter.adtidy.org/v2/checkDomains';
 const CHUNK_SIZE = 25;
@@ -17,6 +17,15 @@ const CHUNK_SIZE = 25;
 // DNS queries.
 const dnsProcessing = {};
 const dnsCache = {};
+
+/**
+ * Custom DNS lookup function that caches resolution result permanently.
+ *
+ * @param {string} hostname - The hostname to resolve.
+ * @param {object} options - The options object.
+ * @param {boolean} options.all - If true, return all resolved addresses.
+ * @param {Function} cb - The callback function.
+ */
 function dnsLookup(hostname, options, cb) {
     const cached = dnsCache[hostname];
     if (cached) {
@@ -61,8 +70,8 @@ function dnsLookup(hostname, options, cb) {
  * Removes trailing dot from an fully qualified domain name. The reason for
  * that is that urlfilter service does not know how to work with FQDN.
  *
- * @param {String} domain - The domain name to trim.
- * @returns {String} The domain name without trailing dot.
+ * @param {string} domain - The domain name to trim.
+ * @returns {string} The domain name without trailing dot.
  */
 function trimFqdn(domain) {
     return domain.endsWith('.') ? domain.slice(0, -1) : domain;
@@ -72,10 +81,10 @@ function trimFqdn(domain) {
  * This function looks for dead domains among the specified ones. It uses a web
  * service to do that.
  *
- * @param {Array<String>} domains domains to check.
- * @param {Number} chunkSize configures the size of chunks for checking large
+ * @param {Array<string>} domains domains to check.
+ * @param {number} chunkSize configures the size of chunks for checking large
  * arrays.
- * @returns {Promise<Array<String>>} returns the list of dead domains.
+ * @returns {Promise<Array<string>>} returns the list of dead domains.
  */
 async function findDeadDomains(domains, chunkSize = CHUNK_SIZE) {
     const result = [];

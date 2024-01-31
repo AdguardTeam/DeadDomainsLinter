@@ -29,7 +29,7 @@ const PATTERN_DOMAIN_REGEX = (() => {
  * does not contain a domain, returns null.
  *
  * @param {agtree.NetworkRule} ast - The rule AST.
- * @returns {String|null} The domain extracted from the AST.
+ * @returns {string | null} The domain extracted from the AST.
  */
 function extractDomainFromPattern(ast) {
     if (!ast.pattern) {
@@ -57,9 +57,10 @@ function extractDomainFromPattern(ast) {
 
 /**
  * Represents a domain that is used in the rule. It can be a negated domain.
- * @typedef {Object} RuleDomain
  *
- * @property {String} domain - The domain name.
+ * @typedef {object} RuleDomain
+ *
+ * @property {string} domain - The domain name.
  * @property {boolean} negated - True if the domain is negated.
  */
 
@@ -88,7 +89,7 @@ function extractModifierDomains(modifier) {
  *
  * @param {agtree.NetworkRule} ast - The AST of a network rule to extract
  * domains from.
- * @returns {Array<String>} The list of all domains that are used by this rule.
+ * @returns {Array<string>} The list of all domains that are used by this rule.
  */
 function extractNetworkRuleDomains(ast) {
     const domains = [];
@@ -122,7 +123,7 @@ function extractNetworkRuleDomains(ast) {
  *
  * @param {agtree.CosmeticRule} ast - The AST of a cosmetic rule to extract
  * domains from.
- * @returns {Array<String>} The list of all domains that are used by this rule.
+ * @returns {Array<string>} The list of all domains that are used by this rule.
  */
 function extractCosmeticRuleDomains(ast) {
     // TODO(ameshkov): Extract and analyze cosmetic rules modifiers too.
@@ -142,7 +143,7 @@ function extractCosmeticRuleDomains(ast) {
  * This function goes through the rule AST and extracts domains from it.
  *
  * @param {agtree.AnyRule} ast - The AST of the rule to extract domains from.
- * @returns {Array<String>} The list of all domains that are used by this rule.
+ * @returns {Array<string>} The list of all domains that are used by this rule.
  */
 function extractRuleDomains(ast) {
     switch (ast.category) {
@@ -161,7 +162,7 @@ function extractRuleDomains(ast) {
  *
  * @param {agtree.CosmeticRule} ast - The network rule AST to modify and remove
  * dead domains.
- * @param {Array<String>} deadDomains - A list of dead domains.
+ * @param {Array<string>} deadDomains - A list of dead domains.
  *
  * @returns {agtree.AnyRule|null} Returns AST of the rule text with suggested
  * modification. Returns null if the rule must be removed.
@@ -221,7 +222,7 @@ function modifyCosmeticRule(ast, deadDomains) {
  *
  * @param {agtree.NetworkRule} ast - The network rule AST to modify and remove
  * dead domains.
- * @param {Array<String>} deadDomains - A list of dead domains.
+ * @param {Array<string>} deadDomains - A list of dead domains.
  *
  * @returns {agtree.AnyRule|null} Returns AST of the rule text with suggested
  * modification. Returns null if the rule must be removed.
@@ -311,7 +312,7 @@ function modifyNetworkRule(ast, deadDomains) {
  * domains.
  *
  * @param {agtree.AnyRule} ast - The rule AST to modify and remove dead domains.
- * @param {Array<String>} deadDomains - A list of dead domains.
+ * @param {Array<string>} deadDomains - A list of dead domains.
  *
  * @returns {agtree.AnyRule|null} Returns AST of the rule text with suggested
  * modification. Returns null if the rule must be removed.
@@ -336,9 +337,9 @@ const domainsCheckCache = {};
  * Goes through the list of domains that needs to be checked and uses the
  * urlfilter web service to check which of them are dead.
  *
- * @param {Array<String>} domains - Parts of the rule with domains.
+ * @param {Array<string>} domains - Parts of the rule with domains.
  * @param {boolean} useDNS - Double-check dead domains with a DNS query.
- * @returns {Promise<Array<String>>} A list of dead domains.
+ * @returns {Promise<Array<string>>} A list of dead domains.
  */
 async function findDeadDomains(domains, useDNS) {
     const deadDomains = [];
@@ -386,19 +387,20 @@ async function findDeadDomains(domains, useDNS) {
 /**
  * Result of the dead domains check. Contains the list of dead domains found
  * in the rule and the suggested rule text after removing dead domains.
- * @typedef {Object} LinterResult
+ *
+ * @typedef {object} LinterResult
  *
  * @property {agtree.AnyRule|null} suggestedRule - AST of the suggested rule
  * after removing dead domains. If the whole rule should be removed, this field
  * is null.
- * @property {Array<String>} deadDomains - A list of dead domains in the rule.
+ * @property {Array<string>} deadDomains - A list of dead domains in the rule.
  */
 
 /**
  * This function parses the input rule, extracts all domain names that can be
  * found there and checks if they are alive using the urlfilter web service.
  *
- * @param {String} ast - AST of the rule that we're going to check.
+ * @param {string} ast - AST of the rule that we're going to check.
  * @param {boolean} useDNS - Double-check the dead domains with a DNS query.
  * @returns {Promise<LinterResult|null>} Result of the rule linting.
  */

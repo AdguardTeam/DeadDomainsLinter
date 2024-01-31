@@ -4,7 +4,8 @@ const tldts = require('tldts');
  * Helper function that takes an array and returns a new one without any
  * duplicate items.
  *
- * @param {Array<String>} arr - THe array to check for duplicates.
+ * @param {Array<string>} arr - THe array to check for duplicates.
+ * @returns {Array<string>} Returns a new array without duplicates.
  */
 function unique(arr) {
     return [...new Set([].concat(...arr))];
@@ -22,7 +23,7 @@ const ALLOW_TLD = new Set([
 /**
  * Checks if the given domain is valid for our dead domains check.
  *
- * @param {String} domain - The domain name to check.
+ * @param {string} domain - The domain name to check.
  * @returns {boolean} Returns true if the domain is valid, false otherwise.
  */
 function validDomain(domain) {

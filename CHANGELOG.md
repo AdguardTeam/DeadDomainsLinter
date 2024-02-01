@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 
 ## [Unreleased][unreleased]
 
-[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.16...master
+[unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.18...master
+
+## [1.0.18] - 2024-02-01
+
+### Fixed
+
+- Fixed an issue with importing a list of domains. [#23][#23]
+
+[#23]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/23
+[1.0.18]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.16...v1.0.18
 
 ## [1.0.16] - 2024-01-31
 

@@ -106,8 +106,9 @@ async function main() {
 
         try {
             predefinedDomains = fs.readFileSync(argv.import).toString()
-                .split('\r?\n')
-                .filter((line) => line.trim() !== '');
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter((line) => line !== '');
         } catch (ex) {
             consola.error(`Failed to read from ${argv.import}: ${ex}`);
 

@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 
 [unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.18...master
 
+## [1.0.19] - 2024-02-08
+
+### Changed
+
+- Changed requests to the urlfilter service so that only domain info was checked
+  without testing which lists match the domain, it should speed up the process.
+
+[1.0.19]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.18...v1.0.19
+
 ## [1.0.18] - 2024-02-01
 
 ### Fixed

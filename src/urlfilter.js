@@ -7,7 +7,7 @@ const fetch = require('node-fetch');
  *
  * @param {Array<string>} domains an array of domains to be analyzed.
  */
-const URLFILTER_URL = 'https://urlfilter.adtidy.org/v2/checkDomains';
+const URLFILTER_URL = 'https://urlfilter.adtidy.org/v2/checkDomains?filter=none';
 const CHUNK_SIZE = 25;
 
 // When using native node fetch it is easy to run into ENOTFOUND errors when
@@ -99,7 +99,7 @@ async function findDeadDomains(domains, chunkSize = CHUNK_SIZE) {
     // eslint-disable-next-line no-restricted-syntax
     for (const chunk of chunks) {
         const queryParams = chunk.map((domain) => `domain=${encodeURIComponent(trimFqdn(domain))}`).join('&');
-        const url = `${URLFILTER_URL}?${queryParams}`;
+        const url = `${URLFILTER_URL}&${queryParams}`;
 
         try {
             // eslint-disable-next-line no-await-in-loop

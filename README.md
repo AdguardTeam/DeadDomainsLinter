@@ -81,7 +81,7 @@ dead-domains-linter --commentout
 Instead of immediately modifying the filter list, you may opt to export the
 list of dead domains so that you could carefully review it. For instance, the
 command below scans `filter.txt` for dead domains and exports this list to
-`out.txt`.
+`domains.txt`.
 
 ```shell
 dead-domains-linter -i filter.txt --export=domains.txt

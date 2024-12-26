@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@adguard/agtree": "^1.1.7",
-    "consola": "^3.2.3",
+    "consola": "3.2.3",
     "glob": "^10.3.10",
     "node-fetch": "^2.7.0",
     "tldts": "^6.1.4",

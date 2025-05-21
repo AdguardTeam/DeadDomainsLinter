@@ -28,6 +28,7 @@ const PARALLEL_CHUNK_SIZE = 10;
  * a rule out instead of removing it.
  * @property {Array<string>} deadDomains - Pre-defined list of dead domains. If
  * it is specified, skip all other checks.
+ * @property {Set<string>} ignoreDomains - Set of domains to ignore.
  */
 
 /**
@@ -89,6 +90,7 @@ async function processRuleAst(file, ast, options) {
         const linterResult = await linter.lintRule(ast, {
             useDNS: options.useDNS,
             deadDomains: options.deadDomains,
+            ignoreDomains: options.ignoreDomains,
         });
 
         // If the result is empty, the line can be simply skipped.

@@ -351,7 +351,7 @@ async function findDeadDomains(domains, options) {
     // go through it.
     if (options.deadDomains && options.deadDomains.length > 0) {
         domains.forEach((domain) => {
-            if (options.deadDomains.includes(domain)) {
+            if (options.deadDomains.includes(domain) && !options.ignoreDomains.has(domain)) {
                 deadDomains.push(domain);
             }
         });
@@ -359,8 +359,9 @@ async function findDeadDomains(domains, options) {
         return utils.unique(deadDomains);
     }
 
+    const nonIgnoredDomains = domains.filter((domain) => !options.ignoreDomains.has(domain));
     // eslint-disable-next-line no-restricted-syntax
-    for (const domain of utils.unique(domains)) {
+    for (const domain of utils.unique(nonIgnoredDomains)) {
         if (Object.prototype.hasOwnProperty.call(domainsCheckCache, domain)) {
             if (domainsCheckCache[domain] === false) {
                 deadDomains.push(domain);
@@ -407,6 +408,7 @@ async function findDeadDomains(domains, options) {
  * returned by the urlfilter web service.
  * @property {Array<string>} deadDomains - Pre-defined list of dead domains. If
  * it is specified, skip all other checks.
+ * @property {Set<string>} ignoreDomains - Set of domains to ignore.
  */
 
 /**

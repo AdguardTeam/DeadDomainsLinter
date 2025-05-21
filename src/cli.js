@@ -41,6 +41,10 @@ const { argv } = require('yargs')
         type: 'string',
         description: 'Import dead domains from the specified file and skip other checks.',
     })
+    .option('ignore', {
+        type: 'string',
+        description: 'File with domains to ignore.',
+    })
     .option('auto', {
         alias: 'a',
         type: 'boolean',
@@ -120,6 +124,22 @@ async function main() {
 
     consola.info(`Found ${files.length} file${plural ? 's' : ''} matching ${globExpression}`);
 
+    let ignoreDomainsList = [];
+    if (argv.ignore) {
+        consola.info(`Importing domains to ignore from ${argv.ignore}`);
+        try {
+            ignoreDomainsList = fs.readFileSync(argv.ignore).toString()
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter((line) => line !== '');
+        } catch (ex) {
+            consola.error(`Failed to read from ${argv.ignore}: ${ex}`);
+
+            process.exit(1);
+        }
+        consola.info(`Imported ${ignoreDomainsList.length} domains to ignore`);
+    }
+    const ignoreDomains = new Set(ignoreDomainsList);
     // This array is used when export is enabled.
     const deadDomains = [];
 
@@ -135,6 +155,7 @@ async function main() {
                 useDNS: argv.dnscheck,
                 commentOut: argv.commentout,
                 deadDomains: predefinedDomains,
+                ignoreDomains,
             };
 
             // eslint-disable-next-line no-await-in-loop

@@ -6,6 +6,7 @@ describe('File linter', () => {
     it('test a simple automatic run', async () => {
         const fileResult = await fileLinter.lintFile('test/resources/filter.txt', {
             auto: true,
+            ignoreDomains: new Set(),
         });
 
         expect(fileResult).toBeDefined();

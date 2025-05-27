@@ -4,3 +4,6 @@
 .eslintcache
 dist
 node_modules/
+
+.npmrc
+*.tgz

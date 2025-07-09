@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [Keep a Changelog]: https://keepachangelog.com/en/1.0.0/
 [Semantic Versioning]: https://semver.org/spec/v2.0.0.html
 
+## [1.0.23] - 2025-07-07
+
+### Added
+ - Option to add a file with domains to ignore when running [#33].
+
+[1.0.23]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.22...v1.0.23
+[#33]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/32
+
 ## [1.0.22] - 2024-12-26
 
 ### Fixed

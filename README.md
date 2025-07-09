@@ -76,6 +76,11 @@ domains instead of removing them. You can enable this feature by passing the
 dead-domains-linter --commentout
 ```
 
+### Ignoring domains
+
+If there are specific domains you want the tool to ignore and treat as valid,
+you can use the --ignore flag and provide a file containing a list of domains to be excluded.
+
 ### Exporting and using a pre-defined list of domains
 
 Instead of immediately modifying the filter list, you may opt to export the
@@ -139,6 +144,7 @@ Options:
                     modifying the files.                                [string]
       --import      Import dead domains from the specified file and skip other
                     checks.                                             [string]
+      --ignore      File with domains to ignore.                        [string]
   -a, --auto        Automatically apply suggested fixes without asking the user.
                                                       [boolean] [default: false]
   -s, --show        Show suggestions without applying them.

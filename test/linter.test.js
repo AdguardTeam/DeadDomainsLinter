@@ -1,10 +1,10 @@
 const agtree = require('@adguard/agtree');
 const checker = require('../src/linter');
 
-const testLintRule = (rule, expected, useDNS = false) => {
+const testLintRule = (rule, expected, useDNS = false, ignoreDomains = new Set()) => {
     return async () => {
         const ast = agtree.RuleParser.parse(rule);
-        const result = await checker.lintRule(ast, useDNS);
+        const result = await checker.lintRule(ast, { useDNS, ignoreDomains });
 
         if (expected === null) {
             expect(result).toEqual(null);
@@ -49,6 +49,16 @@ describe('Linter', () => {
                 remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
+        );
+
+        it(
+            'ignore removing rule with a dead domain in the pattern URL',
+            testLintRule(
+                '||example.notexistingdomain/thisissomepath/tosomewhere',
+                null,
+                false,
+                new Set(['example.notexistingdomain']),
+            ),
         );
 
         it(
@@ -187,6 +197,19 @@ describe('Linter', () => {
         );
 
         it(
+            'ignore dead domain as part of $domain modifier',
+            testLintRule(
+                '||example.org^$domain=example.notexisting1|google.com|example.notexisting2',
+                {
+                    suggestedRuleText: '||example.org^$domain=example.notexisting1|google.com',
+                    deadDomains: ['example.notexisting2'],
+                },
+                false,
+                new Set(['example.notexisting1']),
+            ),
+        );
+
+        it(
             'suggest removing one negated domain of two from a network rule',
             testLintRule('||example.org^$domain=~example.org|~example.notexisting', {
                 suggestedRuleText: '||example.org^$domain=~example.org',
@@ -211,11 +234,29 @@ describe('Linter', () => {
         );
 
         it(
+            'ignore with $domain modifier',
+            testLintRule('||example.org^$domain=example.org|~example.notexisting1|~example.notexisting2,third-party', {
+                suggestedRuleText: '||example.org^$domain=example.org|~example.notexisting1,third-party',
+                deadDomains: ['example.notexisting2'],
+            }, false, new Set(['example.notexisting1'])),
+        );
+
+        it(
             'suggest removing the whole rule when domains in $denyallow are dead',
             testLintRule('||example.org^$denyallow=example.notexisting1', {
                 remove: true,
                 deadDomains: ['example.notexisting1'],
             }),
+        );
+
+        it(
+            'ignore removing rule with ignored dead domain in the pattern from exception rule',
+            testLintRule(
+                '@@||example.notexistingdomain/thisissomepath/tosomewhere',
+                null,
+                true,
+                new Set(['example.notexistingdomain']),
+            ),
         );
     });
 
@@ -236,6 +277,16 @@ describe('Linter', () => {
                 remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
+        );
+
+        it(
+            'ignore removing an element hiding rule which was th dead domains',
+            testLintRule(
+                'example.notexistingdomain##banner',
+                null,
+                false,
+                new Set(['example.notexistingdomain']),
+            ),
         );
 
         it(
@@ -327,11 +378,31 @@ describe('Linter', () => {
         );
 
         it(
+            'ignore removing a scriptlet rule with ignore domain',
+            testLintRule(
+                'example.notexistingdomain#%#//scriptlet("set-constant", "a", "1")',
+                null,
+                false,
+                new Set(['example.notexistingdomain']),
+            ),
+        );
+
+        it(
             'suggest removing a scriptlet exception rule',
             testLintRule('example.notexistingdomain#@%#//scriptlet("set-constant", "a", "1")', {
                 remove: true,
                 deadDomains: ['example.notexistingdomain'],
             }),
+        );
+
+        it(
+            'ignore modifying a scriptlet rule with ignore domain',
+            testLintRule(
+                'example.org,example.notexistingdomain#%#//scriptlet("set-constant", "a", "1")',
+                null,
+                false,
+                new Set(['example.notexistingdomain']),
+            ),
         );
 
         it(
@@ -364,6 +435,29 @@ describe('Linter', () => {
                 suggestedRuleText: 'example.org$$banner',
                 deadDomains: ['example.notexistingdomain'],
             }),
+        );
+
+        it(
+            'ignore all CSS dead domains when they are in the ignore list',
+            testLintRule(
+                'example.org,example.notexistingdomain$$banner',
+                null,
+                false,
+                new Set(['example.notexistingdomain', 'example.org']),
+            ),
+        );
+
+        it(
+            'ignore some CSS dead domains when they are in the ignore list',
+            testLintRule(
+                'example2.notexistingdomain,example.notexistingdomain$$banner',
+                {
+                    suggestedRuleText: 'example.notexistingdomain$$banner',
+                    deadDomains: ['example2.notexistingdomain'],
+                },
+                false,
+                new Set(['example.notexistingdomain']),
+            ),
         );
     });
 });

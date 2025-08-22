@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [Keep a Changelog]: https://keepachangelog.com/en/1.0.0/
 [Semantic Versioning]: https://semver.org/spec/v2.0.0.html
 
+## [1.0.29] - Unreleased
+
+### Changed
+
+- Non ascii domains are now converted to punycode and checked [#35].
+
+[#35]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/35
+
 ## [1.0.28] - 2025-07-09
 
 ### Added

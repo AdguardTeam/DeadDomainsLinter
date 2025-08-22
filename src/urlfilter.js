@@ -1,6 +1,7 @@
 const dns = require('dns');
 const https = require('https');
 const fetch = require('node-fetch');
+const punycode = require('node:punycode');
 
 /**
  * This function uses urlfilter.adtidy.org to check if domains are alive or not.
@@ -98,7 +99,9 @@ async function findDeadDomains(domains, chunkSize = CHUNK_SIZE) {
     // Compose and send requests for each chunk
     // eslint-disable-next-line no-restricted-syntax
     for (const chunk of chunks) {
-        const queryParams = chunk.map((domain) => `domain=${encodeURIComponent(trimFqdn(domain))}`).join('&');
+        const queryParams = chunk
+            .map((domain) => punycode.toASCII(domain))
+            .map((domain) => `domain=${encodeURIComponent(trimFqdn(domain))}`).join('&');
         const url = `${URLFILTER_URL}&${queryParams}`;
 
         try {
@@ -119,7 +122,7 @@ async function findDeadDomains(domains, chunkSize = CHUNK_SIZE) {
             // Iterate over the domains in the chunk
             // eslint-disable-next-line no-restricted-syntax
             for (const domain of chunk) {
-                const domainData = data[trimFqdn(domain)];
+                const domainData = data[punycode.toASCII(trimFqdn(domain))];
                 if (domainData && domainData.info.registered_domain_used_last_24_hours === false) {
                     result.push(domain);
                 }

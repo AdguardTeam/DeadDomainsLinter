@@ -122,6 +122,24 @@ describe('Linter', () => {
         );
 
         it(
+            'do not suggest removing non ASCII domains',
+            testLintRule('||поддерживаю.рф^', null),
+        );
+
+        it(
+            'do not suggest removing non ASCII domains from modifier',
+            testLintRule('||example.org^$domain=поддерживаю.рф', null),
+        );
+
+        it(
+            'suggest removing dead non ASCII domain from modifier',
+            testLintRule('||example.org^$domain=ппример2.рф', {
+                remove: true,
+                deadDomains: ['ппример2.рф'],
+            }),
+        );
+
+        it(
             'do not suggest removing rules that target browser extensions',
             testLintRule('@@||evernote.com^$domain=pioclpoplcdbaefihamjohnefbikjilc', null),
         );

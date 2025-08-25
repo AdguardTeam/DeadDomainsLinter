@@ -11,9 +11,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Changed
 
+- Linter now respects retry-after header for requests to adtidy API [#43].
 - Non ascii domains are now converted to punycode and checked [#35].
 
 [#35]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/35
+[#43]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/43
 
 ## [1.0.28] - 2025-07-09
 

@@ -9,7 +9,7 @@ environments:
 
 npmjs:
   docker:
-    image: adguard/node-ssh:18.13--3
+    image: adguard/node-ssh:22.17--0
   triggers: []
   tasks:
     - checkout:

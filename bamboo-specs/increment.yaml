@@ -5,7 +5,7 @@ plan:
   key: DDLINCR
   name: dead-domains-linter - increment
 variables:
-  dockerContainer: adguard/node-ssh:22.17--0
+  dockerContainer: adguard/node-ssh:22.22--0
 
 stages:
   - Increment:

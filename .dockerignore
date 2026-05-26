@@ -1,0 +1,14 @@
+.git
+.idea
+.vscode
+.DS_Store
+.eslintcache
+*.tsbuildinfo
+dist/
+output/
+node_modules/
+Dockerfile*
+*.log
+*.md
+.husky
+.github

@@ -4,8 +4,6 @@ plan:
   project-key: AJL
   key: DDLTEST
   name: dead-domains-linter - tests
-variables:
-  dockerContainer: adguard/node-ssh:22.22--0
 
 stages:
   - Test:
@@ -16,10 +14,8 @@ stages:
 
 Test:
   key: TEST
-  docker:
-    image: "${bamboo.dockerContainer}"
-    volumes:
-      ${system.PNPM_DIR}: "${bamboo.cachePnpm}"
+  other:
+    clean-working-dir: true
   tasks:
     - checkout:
         force-clean-build: true
@@ -27,32 +23,34 @@ Test:
         interpreter: SHELL
         scripts:
           - |-
-            set -e
-            set -x
+            set -ex
 
             # Fix mixed logs
             exec 2>&1
 
-            pnpm install --ignore-scripts --no-optional
+            export DOCKER_BUILDKIT=1
 
-            pnpm run lint
-            pnpm run test
-  final-tasks:
+            docker build \
+              --file Dockerfile \
+              --progress plain \
+              --build-arg BUILD_RUN_ID=${bamboo.buildNumber} \
+              --target test-output \
+              --output type=local,dest=output \
+              .
     - script:
         interpreter: SHELL
         scripts:
           - |-
-            set -x
-            set -e
-
-            # Fix mixed logs
-            exec 2>&1
-
-            ls -la
-
-            echo "Size before cleanup:" && du -h | tail -n 1
-            rm -rf node_modules
-            echo "Size after cleanup:" && du -h | tail -n 1
+            if [ -f output/exit-code.txt ]; then
+              exit $(cat output/exit-code.txt)
+            fi
+            echo "output/exit-code.txt not found"
+            exit 1
+  final-tasks:
+    - script:
+        interpreter: SHELL
+        scripts:
+          - "./bamboo-specs/scripts/cleanup.sh"
   requirements:
     - adg-docker: "true"
 

@@ -1,7 +1,7 @@
 FROM adguard/node-ssh:22.22--0 AS base
 SHELL ["/bin/bash", "-lc"]
 
-RUN npm install -g pnpm@10.7.0
+RUN npm install -g pnpm@10.7.1
 
 WORKDIR /dead-domains-linter
 
@@ -29,39 +29,29 @@ COPY . .
 
 # ============================================================================
 # Stage: test
-# Runs lint and tests; captures exit code so Bamboo can report failures
+# Runs lint and tests; a non-zero exit fails the docker build (and CI)
 # ============================================================================
 FROM source AS test
 
-ARG BUILD_RUN_ID=""
-
 RUN --mount=type=cache,target=/pnpm-store,id=dead-domains-linter-pnpm \
+    pnpm run lint && \
+    pnpm run test && \
     mkdir -p /out && \
-    echo "${BUILD_RUN_ID}" > /out/.build-run-id && \
-    set +e; \
-    pnpm run lint && pnpm run test; \
-    EXIT_CODE=$?; \
-    echo "${EXIT_CODE}" > /out/exit-code.txt; \
-    exit 0
+    touch /out/test-passed.txt
 
 FROM scratch AS test-output
 COPY --from=test /out/ /
 
 # ============================================================================
 # Stage: build
-# Generates build.txt and packs the npm tarball
+# Packs the npm tarball into /out/artifacts
 # ============================================================================
 FROM source AS build
 
-ARG BUILD_RUN_ID=""
-
 RUN --mount=type=cache,target=/pnpm-store,id=dead-domains-linter-pnpm \
-    mkdir -p /out/artifacts && \
-    echo "${BUILD_RUN_ID}" > /out/.build-run-id && \
-    pnpm run build-txt && \
-    cp dist/build.txt /out/artifacts/ && \
     pnpm pack --out dead-domains-linter.tgz && \
+    mkdir -p /out/artifacts && \
     mv dead-domains-linter.tgz /out/artifacts/
 
 FROM scratch AS build-output
-COPY --from=build /out/ /
+COPY --from=build /out/artifacts/ /

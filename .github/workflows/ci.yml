@@ -1,0 +1,23 @@
+name: CI
+
+description: Lints, tests, and builds on pull requests and pushes to master.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+# Runs on every PR and every push to master; cancel superseded runs to avoid
+# spawning overlapping workflows that waste self-hosted runner capacity.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint, test, build
+    uses: AdGuardSoftwareLimited/ext-shared-actions/.github/workflows/test-and-build.yml@master
+    with:
+      package_file: dead-domains-linter.tgz
+      team: filters

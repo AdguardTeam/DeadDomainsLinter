@@ -6,6 +6,11 @@ This is a simple tool that checks adblock filtering rules for dead domains.
 
 In the future, it should be replaced with an [AGLint rule][aglintrule].
 
+> **Note on repositories:** Active development happens in the private
+> [AdGuardSoftwareLimited/filters-dead-domains-linter](https://github.com/AdGuardSoftwareLimited/filters-dead-domains-linter)
+> repository; this public [AdguardTeam/DeadDomainsLinter](https://github.com/AdguardTeam/DeadDomainsLinter)
+> repository is a read-only mirror that is updated automatically from it.
+
 [aglintrule]: https://github.com/AdguardTeam/AGLint/issues/194
 [npm-badge]: https://img.shields.io/npm/v/@adguard/dead-domains-linter
 [npm-url]: https://www.npmjs.com/package/@adguard/dead-domains-linter

@@ -1,0 +1,45 @@
+name: Publish release
+
+description: >-
+  Tags the release commit, builds, tests, publishes to npm,
+  mirrors to the public repo, drafts a GitHub Release, and notifies Slack.
+
+# The `pull_request` trigger fires for ANY closed PR against master, including
+# PRs closed without being merged. The called workflow (tag-from-changelog)
+# only proceeds when `github.event.pull_request.merged == true` and the head
+# ref starts with `release-bump/`, so an unmerged close is a safe no-op.
+# Mirroring that guard here keeps the intent visible at the call site.
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Ref to publish manually
+        required: false
+        type: string
+
+# Serialize release runs: a manual dispatch racing a merge-triggered run must
+# not concurrently create tags, publish to npm, or draft GitHub Releases.
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+    timeout-minutes: 30
+    uses: AdGuardSoftwareLimited/ext-shared-actions/.github/workflows/publish-release.yml@master
+    with:
+      package_file: dead-domains-linter.tgz
+      npm_package_name: "@adguard/dead-domains-linter"
+      target_repo: AdguardTeam/DeadDomainsLinter
+      team: filters
+      slack_channel: "#adguard-filters-vcs"
+      ref: ${{ inputs.ref }}
+    secrets: inherit
+    permissions:
+      contents: write  # create tag & GitHub release (tag-from-changelog, mirror-and-release)
+      id-token: write  # OIDC trusted publishing to npm (deploy-to-npm, mirror-and-release)
+      actions: write   # disable/enable workflows in the mirror repo (mirror-and-release)

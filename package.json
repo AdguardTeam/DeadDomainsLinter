@@ -1,6 +1,5 @@
 {
   "name": "@adguard/dead-domains-linter",
-  "version": "1.0.37",
   "description": "Simple tool to check adblock filtering rules for dead domains.",
   "keywords": [
     "adblock",
@@ -51,8 +50,6 @@
   "scripts": {
     "lint": "eslint . --cache",
     "test": "jest --runInBand --detectOpenHandles --verbose .",
-    "increment": "npm version patch --no-git-tag-version",
-    "prepare": "husky",
-    "build-txt": "node tools/build-txt.js"
+    "prepare": "husky"
   }
 }

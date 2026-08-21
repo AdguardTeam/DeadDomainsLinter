@@ -29,7 +29,6 @@ concurrency:
 jobs:
   publish:
     if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
-    timeout-minutes: 30
     uses: AdGuardSoftwareLimited/ext-shared-actions/.github/workflows/publish-release.yml@master
     with:
       package_file: dead-domains-linter.tgz

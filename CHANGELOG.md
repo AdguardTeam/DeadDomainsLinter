@@ -7,6 +7,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 [Keep a Changelog]: https://keepachangelog.com/en/1.0.0/
 [Semantic Versioning]: https://semver.org/spec/v2.0.0.html
 
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
 ## [1.0.33] - 2025-09-01
 
 ### Changed
@@ -14,6 +28,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - Linter now respects retry-after header for requests to adtidy API [#43].
 - Non ascii domains are now converted to punycode and checked [#35].
 
+[Unreleased]: https://github.com/AdguardTeam/DeadDomainsLinter/compare/v1.0.33...HEAD
 [#35]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/35
 [#43]: https://github.com/AdguardTeam/DeadDomainsLinter/issues/43
 

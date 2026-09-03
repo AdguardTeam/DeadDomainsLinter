@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- The `--verbose` flag now actually prints per-rule diagnostics. They were
+  sent through the `consola.verbose` channel, whose level is `Infinity` in
+  consola 3.x, so no finite log level could ever show them.
+
 ### Security
 
 ## [1.0.38] - 2026-08-22

@@ -2,176 +2,231 @@
 
 [![npm-badge]][npm-url] [![license-badge]][license-url]
 
-This is a simple tool that checks adblock filtering rules for dead domains.
+<p align="center">
+  A CLI tool that scans adblock filter lists for rules that reference dead
+  domains and fixes them.
+</p>
 
-In the future, it should be replaced with an [AGLint rule][aglintrule].
+<!-- markdownlint-disable MD013 -->
+<p align="center">
+  <img src="https://cdn.adtidy.org/website/github.com/DeadDomainsLinter/default-config.png" alt="Dead Domains Linter in interactive mode" width="600">
+</p>
+<!-- markdownlint-enable MD013 -->
 
-> **Note on repositories:** Active development happens in the private
+## Description
+
+Dead Domains Linter is a command-line tool for maintainers of adblock filter
+lists (AdGuard, uBlock Origin, ABP). Filter lists accumulate rules that
+reference dead domains — domains that no longer resolve or are no longer
+visited by anyone. Finding and cleaning up such rules by hand is tedious and
+error-prone, which is what this tool automates.
+
+The tool scans `*.txt` filter list files, extracts domains from each rule,
+and checks them against the `urlfilter.adtidy.org` web service, which tracks
+domains used by AdGuard DNS users within the last 24 hours. Domains absent
+from that snapshot are treated as dead and, by default, double-checked with a
+DNS query. For each affected rule the tool suggests a fix — remove the whole
+rule or strip the dead domain from its pattern and modifiers — and applies it
+interactively (with user confirmation), automatically (`--auto`), or not at
+all (`--show`).
+
+> **Note.** The tool is meant to be replaced by an [AGLint
+> rule](https://github.com/AdguardTeam/AGLint/issues/194) in the future.
+
+> **Note on repositories.** Active development happens in the private
 > [AdGuardSoftwareLimited/filters-dead-domains-linter](https://github.com/AdGuardSoftwareLimited/filters-dead-domains-linter)
-> repository; this public [AdguardTeam/DeadDomainsLinter](https://github.com/AdguardTeam/DeadDomainsLinter)
+> repository; this public
+> [AdguardTeam/DeadDomainsLinter](https://github.com/AdguardTeam/DeadDomainsLinter)
 > repository is a read-only mirror that is updated automatically from it.
 
-[aglintrule]: https://github.com/AdguardTeam/AGLint/issues/194
 [npm-badge]: https://img.shields.io/npm/v/@adguard/dead-domains-linter
 [npm-url]: https://www.npmjs.com/package/@adguard/dead-domains-linter
 [license-badge]: https://img.shields.io/github/license/AdGuardTeam/DeadDomainsLinter
 [license-url]: https://github.com/AdguardTeam/DeadDomainsLinter/blob/master/LICENSE
 
-## How to use
+## Table of Contents
 
-### Installation and update
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Documentation](#documentation)
 
-First of all, install the dead-domains-linter:
+---
 
-```shell
+## Installation
+
+Dead Domains Linter is distributed as an npm package and requires
+[Node.js](https://nodejs.org/) 18 or newer.
+
+```bash
 npm i -g @adguard/dead-domains-linter
 ```
 
-> [!NOTE]
-> If you have it installed and need to update to a newer version, run this
-> command:
->
-> ```shell
-> npm update -g @adguard/dead-domains-linter
-> ```
+> **Note.** npm users are unaffected by the package's `engines.pnpm` field.
+> If you install with pnpm (`pnpm add -g @adguard/dead-domains-linter`), pnpm
+> enforces that range on install, so you need pnpm 10.x (`>=10.33.4 <11`, as
+> declared in the published `package.json`); other versions fail with
+> `ERR_PNPM_UNSUPPORTED_ENGINE`.
 
-### Interactive mode
+The tool is then available as the `dead-domains-linter` command. To update an
+existing installation:
 
-By default it runs in interactive mode, scans the current directory and all its
-subdirectories for `*.txt` files, and asks the user to apply suggested changes.
+```bash
+npm update -g @adguard/dead-domains-linter
+```
 
-Just run it in the directory with your filter lists to see how it works:
+## Quick Start
 
-```shell
+Run the tool in the directory that contains your filter lists. By default it
+scans all `*.txt` files in the current directory and its subdirectories:
+
+```bash
 dead-domains-linter
 ```
 
-Here's how the interactive mode looks like:
-![dead-domain-linter](https://cdn.adtidy.org/website/github.com/DeadDomainsLinter/default-config.png)
+The tool asks you to confirm every suggested fix. To review suggestions
+without changing anything, use `--show`; to apply all fixes without prompts,
+use `--auto`. Print the complete reference with:
 
-You can specify a custom glob expression to select files that the tool will
-scan:
-
-```shell
-dead-domains-linter -i filter.txt
+```bash
+dead-domains-linter --help
 ```
 
-### Automatic and show-only mode
+## Usage
 
-You can allow it to automatically apply suggestions by passing the `--auto`
-flag:
+### Flags
 
-```shell
+| Flag                 | Default    | Description                                                                |
+| -------------------- | ---------- | -------------------------------------------------------------------------- |
+| `-i, --input <glob>` | `**/*.txt` | Glob expression that selects the files to scan.                            |
+| `--dnscheck`         | `true`     | Double-check dead domains with a DNS query.                                |
+| `--commentout`       | `false`    | Comment rules out instead of removing them.                                |
+| `--export <file>`    | —          | Export the found dead domains to a file instead of modifying filter lists. |
+| `--import <file>`    | —          | Import dead domains from a file and skip all other checks.                 |
+| `--ignore <file>`    | —          | File with a list of domains to ignore.                                     |
+| `-a, --auto`         | `false`    | Automatically apply suggested fixes without asking.                        |
+| `-s, --show`         | `false`    | Show suggestions without applying them.                                    |
+| `-v, --verbose`      | `false`    | Run with verbose logging.                                                  |
+| `--version`          | —          | Show the version number.                                                   |
+| `-h, --help`         | —          | Show help.                                                                 |
+
+### Workflows
+
+#### Scan Specific Files
+
+Pass a glob expression with `-i` to limit the scan to particular files or
+directories:
+
+```bash
+dead-domains-linter -i filter.txt
+dead-domains-linter -i "**/filters/**/*.txt"
+```
+
+#### Apply Fixes Automatically
+
+`--auto` applies all suggested fixes without prompting, which makes the tool
+safe to run unattended (e.g., in CI):
+
+```bash
 dead-domains-linter --auto
 ```
 
-Alternatively, you can run it in the "show only" mode:
+#### Preview Suggestions Only
 
-```shell
+`--show` prints the suggested fixes without modifying any file:
+
+```bash
 dead-domains-linter --show
 ```
 
-### Commenting rules out instead of removing them
+#### Comment Rules Out Instead of Removing Them
 
-One more useful feature would be to comment out filter rules that contain dead
-domains instead of removing them. You can enable this feature by passing the
-`--commentout=true` flag:
+With `--commentout`, affected rules are commented out rather than deleted:
 
-```shell
+```bash
 dead-domains-linter --commentout
 ```
 
-### Ignoring domains
+#### Ignore Specific Domains
 
-If there are specific domains you want the tool to ignore and treat as valid,
-you can use the --ignore flag and provide a file containing a list of domains to be excluded.
+Provide a file with one domain per line (blank lines are skipped) to treat
+those domains as valid:
 
-### Exporting and using a pre-defined list of domains
+```bash
+dead-domains-linter --ignore=ignore.txt
+```
 
-Instead of immediately modifying the filter list, you may opt to export the
-list of dead domains so that you could carefully review it. For instance, the
-command below scans `filter.txt` for dead domains and exports this list to
-`domains.txt`.
+#### Export the List of Dead Domains
 
-```shell
+Instead of modifying filter lists, `--export` writes the unique dead domains
+to a file so you can review them:
+
+```bash
 dead-domains-linter -i filter.txt --export=domains.txt
 ```
 
-When you finish the review and clean up the list, you can make the tool use it
-exclusively to modify filter lists. For instance, the command below scans
-`filter.txt` for all domains that are in `domains.txt` and removes them from
-the filter list.
+#### Import a Reviewed List of Dead Domains
 
-```shell
+After reviewing and cleaning up the exported list, make the tool use it
+exclusively — all other checks are skipped:
+
+```bash
 dead-domains-linter -i filter.txt --import=domains.txt --auto
 ```
 
-### Disabling DNS check
+#### Disable the DNS Double-Check
 
-> [!IMPORTANT]
-> Please read this if you maintain a filter list with a large number of users.
+> **Important.** Please read this if you maintain a filter list with a large
+> number of users.
 
-The tool relies on AdGuard DNS snapshot of the Internet domains that represents
-all domains used by 100M+ AdGuard DNS users for the last 24 hours. Using this
-snapshot is a good way to find dead domains, but it alone may not be 100%
-accurate and it can produce false positives for really rarely visited domains.
-This is why the tool also double-checks dead domains with a DNS query.
+The tool relies on an AdGuard DNS snapshot of the Internet domains that
+represents all domains used by 100M+ AdGuard DNS users for the last 24 hours.
+Using this snapshot is a good way to find dead domains, but it alone may not
+be 100% accurate and can produce false positives for really rarely visited
+domains. This is why the tool also double-checks dead domains with a DNS
+query.
 
-If your filter list does not have a large number of dead domains, we recommend
-disabling that double-check by running the tool with the `--dnscheck=false`
-flag:
+If your filter list does not have a large number of dead domains, we
+recommend disabling that double-check:
 
-```shell
+```bash
 dead-domains-linter --dnscheck=false
 ```
 
-> [!NOTE]
-> Actually, AdGuard [filter policy][filterpolicy] requires that the website
-> should be popular enough to be added to the filter list. So there's a great
-> chance that even when the tool produced a false positive when running with
-> `--dnscheck=false`, this domain anyways does not qualify for the filter list.
+> **Note.** AdGuard [filter policy](https://adguard.com/kb/general/ad-filtering/filter-policy/)
+> requires that a website be popular enough to be added to a filter list, so
+> even if the tool produces a false positive with `--dnscheck=false`, the
+> domain most likely does not qualify for the list anyway.
 
-[filterpolicy]: https://adguard.com/kb/general/ad-filtering/filter-policy/
+### Exit Codes
 
-### Full usage info
+| Code | Meaning                                                                                                            |
+| ---- | ------------------------------------------------------------------------------------------------------------------ |
+| `0`  | The tool finished successfully.                                                                                    |
+| `1`  | A fatal error occurred — e.g., an unreadable `--import` or `--ignore` file, or a file that could not be processed. |
 
-```shell
-Usage: dead-domains-linter [options]
+### Input and Output
 
-Options:
-  -i, --input       glob expression that selects files that the tool will scan.
-                                                  [string] [default: "**/*.txt"]
-      --dnscheck    Double-check dead domains with a DNS query.
-                                                       [boolean] [default: true]
-      --commentout  Comment out rules instead of removing them.
-                                                      [boolean] [default: false]
-      --export      Export dead domains to the specified file instead of
-                    modifying the files.                                [string]
-      --import      Import dead domains from the specified file and skip other
-                    checks.                                             [string]
-      --ignore      File with domains to ignore.                        [string]
-  -a, --auto        Automatically apply suggested fixes without asking the user.
-                                                      [boolean] [default: false]
-  -s, --show        Show suggestions without applying them.
-                                                      [boolean] [default: false]
-  -v, --verbose     Run with verbose logging          [boolean] [default: false]
-      --version     Show version number                                [boolean]
-  -h, --help        Show help                                          [boolean]
+- **Input**: filter list files selected by the `-i` glob expression (default
+  `**/*.txt`), optionally a list of dead domains to import (`--import`) and a
+  list of domains to ignore (`--ignore`).
+- **Output**: suggested fixes are applied to the filter list files in place —
+  rules are removed, commented out, or stripped of dead domains. With
+  `--export`, the unique dead domains are written to the specified file
+  instead, and the filter lists are left untouched. Progress, prompts, and
+  summaries are printed to the console.
 
-Examples:
-  dead-domains-linter -i **/*.txt       scan all .txt files in the current
-                                        directory and subdirectories in the
-                                        interactive mode
-  dead-domains-linter -a -i filter.txt  scan filter.txt and automatically apply
-                                        suggested fixes
-```
+## Configuration
 
-## How to develop
+The tool is configured exclusively via command-line flags (see
+[Flags](#flags)). There are no configuration files and no environment
+variables.
 
-First, install [pnpm](https://pnpm.io/): `npm install -g pnpm`.
+---
 
-Then you can use the following commands:
+## Documentation
 
-* `pnpm install` - install dependencies.
-* `pnpm run lint` - lint the code.
-* `pnpm run test` - run the unit-tests.
+- [Development](DEVELOPMENT.md) — how to set up and contribute
+- [LLM agent rules](AGENTS.md) — AI-assisted development guidelines
+- [Changelog](CHANGELOG.md) — version history

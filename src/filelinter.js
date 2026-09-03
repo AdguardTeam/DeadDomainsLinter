@@ -85,7 +85,7 @@ async function processRuleAst(file, ast, options) {
     const lineNumber = ast.loc.start.line;
 
     try {
-        consola.verbose(`Processing ${file}:${lineNumber}: ${line}`);
+        consola.debug(`Processing ${file}:${lineNumber}: ${line}`);
 
         const linterResult = await linter.lintRule(ast, {
             useDNS: options.useDNS,

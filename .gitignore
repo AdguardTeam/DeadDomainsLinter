@@ -2,8 +2,9 @@
 .idea
 .DS_Store
 .eslintcache
-dist
+dist/
 node_modules/
+.sdd/
 
 .npmrc
 *.tgz

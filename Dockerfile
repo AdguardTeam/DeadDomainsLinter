@@ -1,8 +1,6 @@
 FROM adguard/node-ssh:22.22--0 AS base
 SHELL ["/bin/bash", "-lc"]
 
-RUN npm install -g pnpm@10.7.1
-
 WORKDIR /dead-domains-linter
 
 ENV npm_config_store_dir=/pnpm-store

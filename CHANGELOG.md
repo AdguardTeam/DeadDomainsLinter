@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Changed
 
+- Raised the minimum supported Node.js version to 22.23.5 (CVE-2026-111497),
+  a breaking change for installations on older Node.js.
+
 ### Deprecated
 
 ### Removed

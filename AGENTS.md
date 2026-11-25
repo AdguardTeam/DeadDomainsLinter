@@ -27,9 +27,9 @@ full description, usage instructions, and the complete list of flags.
 ## Technical Context
 
 - **Language/Version**: JavaScript (CommonJS); the required pnpm range is
-  declared in `engines.pnpm` in `package.json`. The published package supports
-  Node.js >= 18, but the development toolchain (markdownlint in devDependencies)
-  requires Node.js 22 or newer; see *Prerequisites* in `DEVELOPMENT.md`
+  declared in `engines.pnpm` in `package.json`. The published package and the
+  development toolchain require Node.js >= 22.23.5, the first line that
+  includes the fix for CVE-2026-111497; see *Prerequisites* in `DEVELOPMENT.md`
   for the full toolchain requirements.
 - **Primary Dependencies**: `@adguard/agtree` (filter-rule parsing and AST
   generation), `consola` (logging and interactive prompts), `glob` (file
@@ -286,8 +286,9 @@ A layer may call any lower layer; no layer may depend on a layer above it.
 - **Document deliberate downgrades** — if a dependency is pinned below the
   latest stable release on purpose, record the reason in this section so
   the pin reads as a conscious decision, not a policy violation. Example:
-  `glob@10.4.5` is the last 10.x — `glob@11` requires Node.js >= 20, while
-  the published package supports Node.js >= 18.
+  `glob@10.4.5` is the last 10.x — `glob@11` requires Node.js >= 20; the pin
+  was recorded while the package supported Node.js >= 18, and the Node.js floor
+  is now >= 22.23.5, so the engine range no longer blocks `glob@11`.
 - **Package manager version** — `engines.pnpm` in `package.json` is the
   single source of truth for the required pnpm version; the docs and the
   Dockerfile sanity check reference it instead of restating the numbers. The

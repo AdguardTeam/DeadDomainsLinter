@@ -25,15 +25,14 @@ guidelines read `AGENTS.md`.
 
 ## Prerequisites
 
-- **Node.js** — version 22 or newer for development. The published package
-  supports Node.js 18 or newer (`"engines": { "node": ">=18" }` in
-  `package.json`), but the lint toolchain — markdownlint in
-  devDependencies — requires Node.js 22, so use Node.js 22 (or newer) for
-  local development. CI runs on Node.js 22 (the `adguard/node-ssh:22.22--0`
-  Docker base image).
+- **Node.js** — version 22.23.5 or newer, for development and for the
+  published package (`"engines": { "node": ">=22.23.5" }` in
+  `package.json`). This floor includes the fix for CVE-2026-111497, so do not
+  run the tool or the toolchain on an older runtime. CI runs on Node.js 22.23.5
+  (the `adguard/node-ssh:22.23--0` Docker base image).
 - **pnpm** — a version matching `engines.pnpm` in `package.json`, which is
   the single source of truth for the supported range (pnpm 10.x). The CI
-  Docker image (`adguard/node-ssh:22.22--0`) bundles a compatible pnpm; if
+  Docker image (`adguard/node-ssh:22.23--0`) bundles a compatible pnpm; if
   you need to install one locally, use `npm install -g pnpm@10`.
 - **Git** — to clone the repository and create branches.
 

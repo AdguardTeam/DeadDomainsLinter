@@ -57,7 +57,7 @@ all (`--show`).
 ## Installation
 
 Dead Domains Linter is distributed as an npm package and requires
-[Node.js](https://nodejs.org/) 18 or newer.
+[Node.js](https://nodejs.org/) 22.23.5 or newer.
 
 ```bash
 npm i -g @adguard/dead-domains-linter
